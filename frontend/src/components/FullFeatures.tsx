@@ -17,82 +17,58 @@ import {
 
 const allFeatures = [
   {
-    icon: Zap,
-    title: "Automatic Diagram Generation",
-    description: "Generate system architecture, flowcharts, and UML diagrams instantly from your project description.",
-    details: "Our AI analyzes your project requirements and automatically creates professional diagrams including system architecture, database schemas, user flow diagrams, and UML class diagrams. Export in multiple formats including SVG, PNG, and PDF."
+    icon: Lightbulb,
+    title: "Idea-to-Requirements AI Engine",
+    description: "Instantly transform any idea into structured project requirements.",
+    details: "Paste your project idea and let the AI generate epics, features, user stories, acceptance criteria, constraints, non-functional requirements, and high-level architecture suggestions. All content is editable and updated in real time."
   },
   {
-    icon: Lightbulb,
-    title: "Design Pattern Suggestion",
-    description: "Get intelligent recommendations for the best design patterns to use in your project architecture.",
-    details: "Receive expert-level recommendations for design patterns like MVC, Observer, Factory, Singleton, and more based on your specific project requirements. Each suggestion includes implementation examples and best practices."
+    icon: Zap,
+    title: "Automatic Diagram Generation",
+    description: "Generate system diagrams directly from your requirements.",
+    details: "The platform automatically creates flowcharts, sequence diagrams, ER diagrams, and class diagrams based on your requirements. All diagrams are editable, exportable, and updated dynamically as the project evolves."
   },
   {
     icon: Layers,
-    title: "Tech Stack Recommendation",
-    description: "Receive personalized technology stack suggestions based on your project requirements and goals.",
-    details: "Get tailored recommendations for frontend frameworks, backend technologies, databases, hosting solutions, and development tools. Includes pros/cons analysis, learning resources, and migration paths."
-  },
-  {
-    icon: Clock,
-    title: "Timeline & Cost Estimation",
-    description: "Accurate project timelines and cost estimates to help you plan resources and deadlines effectively.",
-    details: "Generate detailed project timelines with milestone tracking, resource allocation, and accurate cost estimates based on team size, complexity, and industry standards. Includes buffer time calculations and risk assessments."
-  },
-  {
-    icon: FileText,
-    title: "Full Documentation Generation",
-    description: "Complete project documentation including API specs, user guides, and technical documentation.",
-    details: "Automatically generate comprehensive documentation including API documentation, user manuals, technical specifications, deployment guides, and maintenance procedures. All documents are professionally formatted and export-ready."
-  },
-  {
-    icon: Edit,
-    title: "User Editing",
-    description: "Easily edit and customize all generated content to match your specific requirements and preferences.",
-    details: "Full-featured editor with real-time preview, version control, collaborative editing, and custom templates. Make changes to any generated content with intelligent suggestions and auto-completion."
-  },
-  {
-    icon: RefreshCw,
-    title: "Real-time Diagram Updates",
-    description: "See your diagrams update in real-time as you modify your project specifications and requirements.",
-    details: "Dynamic diagram updates that reflect changes instantly as you modify project requirements. Includes change tracking, rollback functionality, and collaborative real-time editing with team members."
-  },
-  {
-    icon: Code,
-    title: "Code Skeleton Generation",
-    description: "Get started quickly with auto-generated code skeletons and project structure templates.",
-    details: "Generate production-ready code skeletons with proper folder structure, configuration files, testing setup, CI/CD pipelines, and best practices implementation. Supports 20+ programming languages and frameworks."
+    title: "AI Task Planner & Sprint Generator",
+    description: "Break down user stories into actionable tasks using AI.",
+    details: "The system automatically generates tasks, assigns priorities, groups them by sprint, and balances workloads. Supports task estimation, auto-assignment, and real-time synchronization with team members."
   },
   {
     icon: Users,
-    title: "Collaboration & Sharing",
-    description: "Share your project plans with team members and collaborate in real-time on project specifications.",
-    details: "Advanced collaboration features including real-time editing, comment system, approval workflows, permission management, and team workspace organization. Integrates with Slack, Teams, and other communication tools."
+    title: "Real-Time Collaborative Workspace",
+    description: "Team collaboration with live editing and role-based access.",
+    details: "Multiple users can edit diagrams, documents, and tasks simultaneously. Includes permissions (admin, member, guest), activity tracking, and team-level access rules for each project area."
   },
   {
-    icon: Globe,
-    title: "Multilingual Export",
-    description: "Export your documentation and plans in multiple languages to support global development teams.",
-    details: "Support for 25+ languages with professional translation services, cultural adaptation, and localized formatting. Maintain consistency across all language versions with automated sync and update notifications."
+    icon: FileText,
+    title: "Full Project Documentation",
+    description: "Export complete documentation with one click.",
+    details: "Generate a unified project PDF containing requirements, diagrams, architecture, tasks, cost estimates, technical recommendations, and more. Perfect for investors, managers, and developers."
   },
   {
-    icon: Database,
-    title: "Database Schema Generation",
-    description: "Automatically generate optimized database schemas with relationships and constraints.",
-    details: "Create normalized database schemas with proper indexing, foreign key relationships, data validation rules, and performance optimization. Supports SQL and NoSQL databases with migration scripts included."
+    icon: Clock,
+    title: "Estimation & Project Insights",
+    description: "Accurate cost, timeline, and workload calculations.",
+    details: "AI estimates development time, complexity, cost ranges, team workload distribution, and delivery phases. Includes a dashboard with charts and metrics for admins."
   },
   {
-    icon: Shield,
-    title: "Security Recommendations",
-    description: "Get security best practices and recommendations tailored to your project's specific needs.",
-    details: "Comprehensive security analysis including vulnerability assessments, encryption recommendations, authentication strategies, data protection guidelines, and compliance requirements (GDPR, HIPAA, SOC 2)."
+    icon: Code,
+    title: "GitHub Scaffold & Code Generation",
+    description: "Generate and push a full project scaffold automatically.",
+    details: "With one click, create a complete code scaffold (frontend, backend, folder structure, configs) and push it to the admin’s GitHub repo. Includes environment setup, README, and optional CI/CD templates."
   },
   {
     icon: GitBranch,
-    title: "DevOps Pipeline Suggestion",
-    description: "Receive customized CI/CD pipeline recommendations to streamline your deployment process.",
-    details: "Complete DevOps setup with CI/CD pipeline configuration, automated testing strategies, deployment automation, monitoring setup, and infrastructure as code. Supports major platforms like AWS, Azure, GCP, and Docker."
+    title: "AI Architecture & Tech Recommendations",
+    description: "Receive personalized architecture and technology suggestions.",
+    details: "The system recommends the best architecture style (microservices, monolith, serverless), technology stacks, hosting providers, database choices, and scalability strategies based on your project type."
+  },
+  {
+    icon: Shield,
+    title: "Role-Based Security & Audit Logs",
+    description: "Protect your workspace with granular access control.",
+    details: "Admins manage user roles, permissions, and audit logs for every action inside a project. Includes compliance rules, data retention, and secure collaboration."
   }
 ];
 
@@ -131,11 +107,7 @@ const FullFeatures = () => {
                     {feature.details}
                   </p>
                 </div>
-                
-                <div className="flex items-center text-primary font-medium">
-                  <span>Learn more about this feature</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </div>
+              
               </div>
               
               {/* Feature Visual */}

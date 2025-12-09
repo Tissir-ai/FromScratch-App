@@ -34,7 +34,7 @@ export default function FeaturesPage() {
                 <div className="flex items-center justify-center gap-2"><Lightbulb className="h-4 w-4 text-primary" /> Idea brief</div>
                 <div className="flex items-center justify-center gap-2"><Brain className="h-4 w-4 text-primary" /> Requirements</div>
                 <div className="flex items-center justify-center gap-2"><GitBranch className="h-4 w-4 text-primary" /> Diagrams</div>
-                <div className="flex items-center justify-center gap-2"><FileText className="h-4 w-4 text-primary" /> PDF exports</div>
+                <div className="flex items-center justify-center gap-2"><FileText className="h-4 w-4 text-primary" /> PDF exports </div>
               </div>
             </div>
           </div>

@@ -42,8 +42,6 @@ const nextConfig = {
     "@radix-ui/react-toggle-group",
     "@radix-ui/react-tooltip",
   ],
-  // 3. Enable standalone output for Docker
-  output: 'standalone',
 }
 
 module.exports = nextConfig 

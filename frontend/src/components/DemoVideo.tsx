@@ -7,7 +7,7 @@ const DemoVideo = () => {
                 {/* Header */}
                 <div className="text-center mb-10 sm:mb-14">
                     <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                        Product <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-glow">Demo</span>
+                        Platform <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-glow">Demo</span>
                     </h2>
                     <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
                         A quick walkthrough of how FromScratch.ai turns an idea into a complete, shareable plan.

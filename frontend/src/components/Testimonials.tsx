@@ -89,12 +89,12 @@ const Testimonials = () => {
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
             Loved by{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-glow">
-              Developers
+              Professionals
             </span>{" "}
             Worldwide
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            See what industry professionals are saying about DevPlan Pro and how it's transforming their development workflow.
+            See what industry professionals are saying about FromScratch.ai and how it's transforming their development workflow.
           </p>
         </div>
 
@@ -229,7 +229,7 @@ const Testimonials = () => {
         </div>
 
         {/* Trust Badges */}
-        <div className="text-center mt-16">
+        {/* <div className="text-center mt-16">
           <p className="text-muted-foreground mb-6">Trusted by teams at</p>
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
             <div className="text-2xl font-bold">Google</div>
@@ -239,7 +239,7 @@ const Testimonials = () => {
             <div className="text-2xl font-bold">Stripe</div>
             <div className="text-2xl font-bold">Airbnb</div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

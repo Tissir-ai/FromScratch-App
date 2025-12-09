@@ -196,10 +196,11 @@ const Hero = () => {
 
 
             {/* Mini feature bullets */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm text-muted-foreground mb-8">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> UML diagrams</div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4 text-sm text-muted-foreground mb-8">
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> UML Diagrams</div>
               <div className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Tech stack picks</div>
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> PDF docs</div>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" />Project Scaffold</div>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" />PDF Export</div>
             </div>
 
           </div>
@@ -326,18 +327,7 @@ const Hero = () => {
             <span id="idea-hint" className="sr-only">Type your idea. Press Ctrl+Enter to generate.</span>
 
             {/* Bottom toolbar */}
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between pr-3 sm:pr-4 pl-2 sm:pl-3 pb-3 sm:pb-4 pointer-events-none">
-              <div className="flex items-center gap-2 pointer-events-auto">
-                {/* Hidden file input */}
-                <input ref={uploadInputRef} id="idea-upload" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.pdf,.doc,.docx" className="hidden" onChange={async (e) => { const input = e.currentTarget; await processFiles(e.target.files || []); input.value = ""; }} />
-                <Button type="button" variant="outline" size="sm" aria-label="Upload document(s) to extract requirements" title={attachments.length >= 4 ? "Maximum 4 files" : "Upload document(s)"} disabled={attachments.length >= 4} onClick={() => uploadInputRef.current?.click()} className="flex items-center text-sm">
-                  <Upload />
-                  Attach{attachments.length ? ` (${attachments.length}/4)` : ""}
-                </Button>
-                {attachments.length > 0 && (
-                  <button type="button" className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline" onClick={() => setAttachments([])} aria-label="Clear all attachments">Clear all</button>
-                )}
-              </div>
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-end pr-3 sm:pr-4 pl-2 sm:pl-3 pb-3 sm:pb-4 pointer-events-none">
               <div className="flex items-center gap-3 pointer-events-auto">
                 <span className="text-[11px] text-muted-foreground select-none">
                   {userText.length}/{2000}
@@ -363,14 +353,10 @@ const Hero = () => {
         <div className="mt-2 sm:mt-4 max-w-6xl mx-auto flex items-center justify-center">
           <div className="text-muted-foreground text-center">
             <p className="text-xs sm:text-sm mb-2">Powered by</p>
-            <div className="flex items-center gap-6 opacity-70">
+            <div className="flex items-center justify-center gap-6 opacity-70">
               <div className="flex flex-col items-center">
                 <img src="/logos/github.png" alt="GitHub" className="h-6 w-6 sm:h-8 sm:w-8 mb-1" />
                 <span className="text-[10px] sm:text-xs font-semibold">Github</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <img src="/logos/clickup.png" alt="ClickUp" className="h-6 w-6 sm:h-8 sm:w-8 mb-1" />
-                <span className="text-[10px] sm:text-xs font-semibold">ClickUp</span>
               </div>
             </div>
           </div>

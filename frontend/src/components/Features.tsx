@@ -14,36 +14,37 @@ import { Button } from "@/components/ui/button";
 // Core features to show on main page
 const coreFeatures = [
   {
-    icon: Zap,
-    title: "Automatic Diagram Generation",
-    description: "Generate system architecture, flowcharts, and UML diagrams instantly from your project description."
+    icon: Lightbulb,
+    title: "Idea-to-Requirements AI Engine",
+    description: "Transform any raw idea into structured requirements, epics, user stories, acceptance criteria, and technical outlines instantly."
   },
   {
-    icon: Lightbulb,
-    title: "Design Pattern Suggestion",
-    description: "Get intelligent recommendations for the best design patterns to use in your project architecture."
+    icon: Zap,
+    title: "AI Diagram Generator",
+    description: "Automatically generate flowcharts, ER diagrams, class diagrams, and sequence diagrams from project requirements."
   },
   {
     icon: Layers,
-    title: "Tech Stack Recommendation",
-    description: "Receive personalized technology stack suggestions based on your project requirements and goals."
-  },
-  {
-    icon: Clock,
-    title: "Timeline & Cost Estimation",
-    description: "Accurate project timelines and cost estimates to help you plan resources and deadlines effectively."
+    title: "Task Planner & Sprint Generator",
+    description: "Break down epics into actionable tasks, assign them intelligently, and create balanced sprints using AI."
   },
   {
     icon: FileText,
-    title: "Full Documentation Generation",
-    description: "Complete project documentation including API specs, user guides, and technical documentation."
+    title: "Real-Time Collaborative Workspace",
+    description: "Work together with your team in real time on documents, diagrams, and tasks, with role-based access control."
+  },
+  {
+    icon: Clock,
+    title: "Project Insights & Cost Estimation",
+    description: "Get automatic time estimates, workload summaries, technical recommendations, and cost breakdowns for your project."
   },
   {
     icon: Code,
-    title: "Code Skeleton Generation",
-    description: "Get started quickly with auto-generated code skeletons and project structure templates."
+    title: "PDF Export & GitHub Scaffolding",
+    description: "Download complete project documentation as a PDF or generate and push a full project scaffold directly to GitHub."
   }
 ];
+
 
 const Features = () => {
   return (
@@ -95,7 +96,7 @@ const Features = () => {
               And 7 More Powerful Features
             </h3>
             <p className="text-muted-foreground mb-6">
-              Discover real-time collaboration, security recommendations, DevOps pipeline suggestions, and more advanced capabilities.
+              Explore the full suite of tools designed to streamline your development process and boost productivity.
             </p>
             <Button 
               size="lg" 
