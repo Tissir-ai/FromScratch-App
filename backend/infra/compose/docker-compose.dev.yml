@@ -1,0 +1,46 @@
+services:
+  api:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+    env_file: ["../../.env"]
+    ports: ["8080:8080"]
+    depends_on: [postgres, redis, minio]
+    volumes:
+      - ../../app:/app/app
+      - ../../libs:/app/libs
+      - ../../infra/migrations:/app/infra/migrations
+
+  worker:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+    env_file: ["../../.env"]
+    command: ["rq", "worker", "-u", "${REDIS_URL}", "fromscratch"]
+    depends_on: [redis, postgres]
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: fromscratch
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_pwd
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio_pwd
+    ports: ["9000:9000","9001:9001"]
+    volumes: ["minio:/data"]
+
+volumes:
+  pgdata: {}
+  minio: {}
