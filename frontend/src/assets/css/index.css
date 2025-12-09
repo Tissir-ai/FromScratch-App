@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SaaS Landing Page Design System - Developer Platform */
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 212 77% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 212 77% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 212 77% 15%;
+
+    /* Orange primary color (#FF6F00) */
+    --primary: 27 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 27 100% 45%;
+    --primary-glow: 27 100% 60%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 212 77% 15%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 27 100% 96%;
+    --accent-foreground: 212 77% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 27 100% 50%;
+
+    /* Hero specific colors */
+    --hero-background: 0 0% 100%;
+    --hero-foreground: 212 77% 15%;
+    --hero-accent: 27 100% 50%;
+
+    /* Feature section */
+    --feature-background: 0 0% 98%;
+    --feature-border: 0 0% 90%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(27, 100%, 50%), hsl(27, 100%, 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(0, 0%, 100%), hsl(0, 0%, 98%));
+    --gradient-feature: linear-gradient(135deg, hsl(0, 0%, 100%), hsl(27, 100%, 98%));
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px hsl(0, 0%, 0%, 0.08);
+    --shadow-medium: 0 8px 25px hsl(0, 0%, 0%, 0.1);
+    --shadow-large: 0 25px 50px hsl(0, 0%, 0%, 0.12);
+    --shadow-glow: 0 0 30px hsl(27, 100%, 50%, 0.3);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Blue background (#0A2342) */
+    --background: 212 77% 15%;
+    --foreground: 0 0% 98%;
+
+    --card: 212 77% 18%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 212 77% 18%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Orange stays the same in dark mode */
+    --primary: 27 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 27 100% 45%;
+    --primary-glow: 27 100% 60%;
+
+    --secondary: 212 77% 22%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 212 77% 22%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 212 77% 22%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 212 77% 22%;
+    --input: 212 77% 22%;
+    --ring: 27 100% 50%;
+
+    /* Hero specific colors for dark mode */
+    --hero-background: 212 77% 15%;
+    --hero-foreground: 0 0% 98%;
+    --hero-accent: 27 100% 50%;
+
+    /* Feature section dark mode */
+    --feature-background: 212 77% 18%;
+    --feature-border: 212 77% 25%;
+
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(27, 100%, 50%), hsl(27, 100%, 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(212, 77%, 15%), hsl(212, 77%, 18%));
+    --gradient-feature: linear-gradient(135deg, hsl(212, 77%, 18%), hsl(212, 77%, 20%));
+
+    /* Dark mode shadows */
+    --shadow-soft: 0 2px 8px hsl(0, 0%, 0%, 0.3);
+    --shadow-medium: 0 8px 25px hsl(0, 0%, 0%, 0.4);
+    --shadow-large: 0 25px 50px hsl(0, 0%, 0%, 0.5);
+    --shadow-glow: 0 0 30px hsl(27, 100%, 50%, 0.4);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-feature {
+    background: var(--gradient-feature);
+  }
+
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-medium {
+    box-shadow: var(--shadow-medium);
+  }
+
+  .shadow-large {
+    box-shadow: var(--shadow-large);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-1 shadow-medium;
+  }
+
+  .hover-glow:hover {
+    @apply shadow-glow;
+  }
+
+  /* Text utilities */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .chatbot-pulse {
+    animation: chatbot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+  100% { box-shadow: 0 0 40px hsl(var(--primary) / 0.6); }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
