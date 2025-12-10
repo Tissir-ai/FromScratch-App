@@ -15,7 +15,7 @@ services:
     networks:
       - fromscratch-network
     ports:
-      - "3107:3000"
+      - "3106:3000"
     # Only expose internally within docker network
     expose:
       - "3000"
