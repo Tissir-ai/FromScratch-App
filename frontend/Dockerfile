@@ -23,7 +23,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Build the Next.js application
-RUN npm run build
+RUN npm run build && \
+    echo "Build completed. Checking for standalone output..." && \
+    ls -la .next/ && \
+    if [ ! -d ".next/standalone" ]; then \
+        echo "ERROR: .next/standalone directory not found!"; \
+        echo "next.config.js output setting may be missing or build failed"; \
+        exit 1; \
+    fi
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner

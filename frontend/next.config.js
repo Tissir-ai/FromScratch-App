@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker
+  output: 'standalone',
   // 1. Ignore TS/ESLint during build for faster production builds
   typescript: {
     ignoreBuildErrors: true,
