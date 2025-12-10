@@ -17,6 +17,7 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
+            <img src="/logos/fromscratch.png" alt="Logo" className="h-8 w-8 mr-2" />
             <a href="/" className="text-2xl font-bold text-primary">
               FromScratch.ai
             </a>
