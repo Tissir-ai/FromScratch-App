@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: 'FromScratch.ai - From Idea to Complete Project Plan – Instantly',
   description: 'Transform your software ideas into comprehensive project plans with automatic diagram generation, tech stack recommendations, and full documentation - all in seconds.',
   authors: [{ name: 'FromScratch.ai' }],
+  icons : {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
