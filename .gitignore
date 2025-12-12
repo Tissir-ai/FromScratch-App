@@ -1,0 +1,47 @@
+# SSH Keys - NEVER commit these!
+github-actions-key
+github-actions-key.pub
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Docker volumes data (if accidentally created locally)
+mongodb-data/
+nginx-logs/
+
+# Backup files
+*.backup
+*.bak
+*.old
