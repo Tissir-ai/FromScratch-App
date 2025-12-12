@@ -189,10 +189,10 @@ const Hero = () => {
             </h1>
 
             {/* Subhead */}
-            <p className="text-base sm:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl leading-relaxed">
+            {/* <p className="text-base sm:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl leading-relaxed">
               Transform ideas into comprehensive plans with auto‑generated diagrams, smart stack recommendations,
               and full documentation — in seconds.
-            </p>
+            </p> */}
 
 
             {/* Mini feature bullets */}
