@@ -20,10 +20,12 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SERVER_PORT }}
         script: |
-          cd ${{ secrets.PROJECT_PATH }} || exit 1
+          cd /srv/teams/TissirAi/FromScratch-App || exit 1
+          pwd
+          ls -la docker-compose.yml
           git pull origin main
-          docker compose -f ${{ secrets.PROJECT_PATH }}/docker-compose.yml pull
-          docker compose -f ${{ secrets.PROJECT_PATH }}/docker-compose.yml build --pull
-          docker compose -f ${{ secrets.PROJECT_PATH }}/docker-compose.yml up -d --remove-orphans
+          docker compose -f /srv/teams/TissirAi/FromScratch-App/docker-compose.yml pull
+          docker compose -f /srv/teams/TissirAi/FromScratch-App/docker-compose.yml build --pull
+          docker compose -f /srv/teams/TissirAi/FromScratch-App/docker-compose.yml up -d --remove-orphans
           echo "Deployment completed!"
-          docker compose -f ${{ secrets.PROJECT_PATH }}/docker-compose.yml ps
+          docker compose -f /srv/teams/TissirAi/FromScratch-App/docker-compose.yml ps
