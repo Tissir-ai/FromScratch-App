@@ -1,29 +1,53 @@
 version: '3.8'
 
 services:
-  auth-service:
+  auth-api:
     build:
-      context: ./auth-service
+      context: ./auth
       dockerfile: Dockerfile
-    container_name: fromscratch-auth
+    container_name: fromscratch-auth-api
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=3001
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      - JWT_EXPIRES_IN=24h
+      - PORT=4000
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:8080}
+      - DATABASE_URL=${AUTH_DATABASE_URL:-postgresql://postgres:postgres@auth-db:5432/fromscratch_auth?schema=public}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-change-me}
+      - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN:-15m}
+    depends_on:
+      auth-db:
+        condition: service_healthy
     networks:
       - fromscratch-network
     ports:
-      - "3001:3001"
+      - "4000:4000"
     expose:
-      - "3001"
+      - "4000"
+    command: ["sh", "-c", "npx prisma generate && npx prisma db push && node dist/server.js"]
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "const net=require('net');const s=net.connect(4000,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1));"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 30s
+
+  auth-db:
+    image: postgres:16-alpine
+    container_name: fromscratch-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fromscratch_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - fromscratch-network
 
   nextjs:
     build:
@@ -61,6 +85,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - nginx-logs:/var/log/nginx
     depends_on:
+      - auth-api
       - nextjs
     networks:
       - fromscratch-network
@@ -76,3 +101,4 @@ networks:
 
 volumes:
   nginx-logs:
+  auth-postgres-data:

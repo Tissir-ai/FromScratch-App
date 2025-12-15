@@ -43,7 +43,7 @@ const SignupPage = () => {
 
           {/* Header */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Create your account...CD_test</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
             <p className="text-muted-foreground">Start transforming your ideas into reality</p>
           </div>
 

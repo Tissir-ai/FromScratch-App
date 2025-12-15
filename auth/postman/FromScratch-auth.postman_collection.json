@@ -1,0 +1,214 @@
+{
+  "info": {
+    "name": "FromScratch-auth API",
+    "description": "Postman collection to test the FromScratch-auth backend (auth and subscriptions).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Google: Start login",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth","google","login"]
+            },
+            "description": "Redirects to Google's OAuth consent screen. Use your browser to complete the flow; Postman can follow redirects if needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Google: Callback (manual)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/callback?code=<AUTH_CODE>",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth","google","callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "<AUTH_CODE>",
+                  "description": "Replace with the code returned by Google after authorizing the app"
+                }
+              ]
+            },
+            "description": "Use this to exchange an authorization code for a login cookie/token. Replace <AUTH_CODE> with the code from Google."
+          },
+          "response": []
+        },
+        {
+          "name": "GitHub: Start login",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/github/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth","github","login"]
+            },
+            "description": "Redirects to GitHub's OAuth consent screen. Complete the login in a browser or let Postman follow redirects."
+          },
+          "response": []
+        },
+        {
+          "name": "GitHub: Callback (manual)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/github/callback?code=<AUTH_CODE>",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth","github","callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "<AUTH_CODE>",
+                  "description": "Replace with the code returned by GitHub after authorizing the app"
+                }
+              ]
+            },
+            "description": "Use this to exchange an authorization code for a login cookie/token. Replace <AUTH_CODE> with the code from GitHub."
+          },
+          "response": []
+        },
+        {
+          "name": "Current user (me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "List plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["subscriptions", "plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Subscribe to plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"<PLAN_ID>\",\n  \"autoRenew\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/subscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["subscriptions", "subscribe"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel current subscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["subscriptions", "cancel"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get current subscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/subscription/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["subscriptions", "subscription", "current"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    }
+  ]
+}

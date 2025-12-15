@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: fromscratch-auth-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/fromscratch_auth?schema=public
+      NODE_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+    # Ensure Prisma client exists and schema is applied to the database.
+    # Use `prisma db push` in the container to apply the current schema
+    # (safer when migrations folder is not present). If you prefer migrations,
+    # generate them locally and include them in the image, then use
+    # `prisma migrate deploy` instead.
+    command: ["sh", "-c", "npx prisma generate && npx prisma db push && node dist/server.js"]
+
+  db:
+    image: postgres:16-alpine
+    container_name: fromscratch-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fromscratch_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:4
+    container_name: fromscratch-auth-adminer
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - '8080:8080'
+
+volumes:
+  postgres_data:
