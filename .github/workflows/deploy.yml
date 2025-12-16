@@ -12,6 +12,43 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          frontend/node_modules
+          auth/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json', 'auth/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm install
+    
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+    
+    - name: Install auth dependencies
+      working-directory: ./auth
+      run: npm install
+    
+    - name: Generate Prisma client
+      working-directory: ./auth
+      run: npx prisma generate
+      env:
+        DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+    
+    - name: Build auth service
+      working-directory: ./auth
+      run: npm run build
+    
     - name: Deploy to server via SSH
       uses: appleboy/ssh-action@v1.0.0
       with:
