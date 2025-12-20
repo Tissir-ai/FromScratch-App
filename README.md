@@ -20,18 +20,7 @@ deployment/
 
 ## 🚀 Deployment Steps
 
-### 1. Copy Your Frontend App
-
-Copy the entire frontend project into the `frontend/` directory:
-
-```bash
-# On Windows (PowerShell)
-Copy-Item -Path "c:\Users\dell\Desktop\FromScratch-Frontend-Test\*" -Destination "c:\Users\dell\Desktop\FromScratch-Frontend-Test\deployment\frontend\" -Recurse -Exclude "deployment"
-
-# Or manually copy all project files (except the deployment folder) to deployment/frontend/
-```
-
-### 2. Configure Environment
+### 1. Configure Environment
 
 ```bash
 cd deployment
@@ -39,7 +28,7 @@ copy .env.example .env
 # Edit .env with your configuration
 ```
 
-### 3. Deploy
+### 2. Deploy
 
 ```bash
 # Build and start
@@ -52,7 +41,7 @@ docker-compose logs -f
 docker-compose ps
 ```
 
-### 4. Configure Server Nginx
+### 3. Configure Server Nginx
 
 On your server, create `/etc/nginx/sites-available/fromscratch`:
 
