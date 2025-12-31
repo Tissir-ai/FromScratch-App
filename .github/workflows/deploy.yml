@@ -86,6 +86,10 @@ jobs:
           GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
           EOF
           
+          # Set restrictive permissions (only owner can read/write)
+          chmod 600 .env
+          chown $USER:$USER .env
+          
           # Stop containers
           docker compose down
           
