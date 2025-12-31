@@ -229,7 +229,7 @@ services:
     container_name: fromscratch-stripe-cli
     restart: unless-stopped
     env_file:
-      - /auth/.env
+      - .env
     environment:
       # Provide your test secret key in .env as STRIPE_SECRET_KEY
       - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
