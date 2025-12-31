@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowBigRight, Check, Lightbulb, Brain, GitBranch, FileText, Upload, X, Paperclip } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowBigRight, Check, Lightbulb, Brain, GitBranch, FileText } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const ideas = [
   "Build an AI-powered food delivery app",
@@ -21,14 +23,15 @@ const Hero = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [paused, setPaused] = useState(false);
   const [isTabHidden, setIsTabHidden] = useState(false);
-  const [attachments, setAttachments] = useState<Array<{ name: string; size: number; type: string; isText: boolean; content?: string }>>([]);
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
   const stepRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [dotY, setDotY] = useState(0);
   const [railHeight, setRailHeight] = useState(0);
+  const {isAuthenticated} = useAuth();
+  const router = useRouter(); 
 
+  const MIN_PROMPT = 30;
+  const MAX_PROMPT = 300;
   const steps = [
     {
       id: 0,
@@ -94,6 +97,21 @@ const Hero = () => {
     return () => clearInterval(t);
   }, [paused, isTabHidden, steps.length]);
 
+  const { toast } = useToast();
+
+  const handleGenerate = useCallback(() => {
+    const idea = userText.trim() || displayedText.trim();
+    if (!idea) return;
+    if (userText.trim() && userText.trim().length < MIN_PROMPT) {
+      toast({ title: "Too short", description: `Please provide at least ${MIN_PROMPT} characters.`, variant: "destructive" });
+      return;
+    }
+    if(!isAuthenticated){
+        router.push('/auth/login');
+    }
+    
+  }, [userText, displayedText, toast]);
+
   // Track tab visibility
   useEffect(() => {
     const onVis = () => setIsTabHidden(document.hidden);
@@ -122,49 +140,9 @@ const Hero = () => {
     return () => window.removeEventListener("resize", onResize);
   }, [recalcRailMetrics]);
 
-  const handleGenerate = useCallback(() => {
-    const idea = userText.trim() || displayedText.trim();
-    if (!idea) return;
-    // TODO: Wire to actual generate handler
-    // For now, just log. You can replace with navigation or mutation.
-    // e.g., router.push(`/generate?idea=${encodeURIComponent(idea)}`)
-    console.log("Generate from idea:", idea);
-  }, [userText, displayedText]);
+ 
 
-  // Shared file processing helper used by both input and drag-n-drop
-  const processFiles = useCallback(async (files: FileList | File[]) => {
-    const list = Array.from(files || []);
-    if (!list.length) return;
-    const remaining = Math.max(0, 4 - attachments.length);
-    if (remaining <= 0) return;
-    const selected = list.slice(0, remaining);
-    const newItems = await Promise.all(
-      selected.map(async (file) => {
-        const name = file.name;
-        const isText = file.type.startsWith("text/") || /\.(md|markdown|txt|json|csv)$/i.test(name);
-        const base = { name, size: file.size, type: file.type || "", isText } as {
-          name: string;
-          size: number;
-          type: string;
-          isText: boolean;
-          content?: string;
-        };
-        if (isText) {
-          const content = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string) || "");
-            reader.readAsText(file);
-          });
-          return { ...base, content };
-        }
-        return base;
-      })
-    );
-    setAttachments((prev) => {
-      const merged = [...prev, ...newItems];
-      return merged.slice(0, 4);
-    });
-  }, [attachments.length]);
+
 
   return (
     <section className="relative min-h-[92vh] flex items-center bg-gradient-hero overflow-hidden ">
@@ -271,52 +249,14 @@ const Hero = () => {
 
         {/* Full-width input below the two columns */}
         <div className="max-w-6xl mx-auto mt-2">
-          { /* Precompute counters (no state needed) */ }
-          { /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ }
           { (() => null)() }
-          <div
-            className={`relative group rounded-2xl border shadow-sm transition-all duration-200 ${isDraggingOver ? "border-dashed border-primary/60 bg-primary/5" : "border-feature-border bg-card/60 backdrop-blur-sm"}`}
-            onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
-            onDragLeave={(e) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) { setIsDraggingOver(false); } }}
-            onDrop={async (e) => { e.preventDefault(); setIsDraggingOver(false); if (attachments.length >= 4) return; await processFiles(e.dataTransfer.files); }}
-          >
-            {/* Drag overlay */}
-            {isDraggingOver && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary/50 bg-background/70 backdrop-blur-sm">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-primary">Drop files to attach</p>
-                  <p className="text-xs text-muted-foreground">Up to 4 files • PDF, DOCX, TXT, MD, JSON, CSV</p>
-                </div>
-              </div>
-            )}
-            {/* Attached files preview */}
-            <AnimatePresence initial={false}>
-              {attachments.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                  <div className="flex items-center gap-2 flex-wrap p-2">
-                    {attachments.map((a, idx) => (
-                      <motion.div layout key={`${a.name}-${idx}`} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", stiffness: 250, damping: 22 }} className="group flex items-center gap-2 rounded-md border border-feature-border bg-background/70 px-3 py-1">
-                        <span className="text-primary"><Paperclip className="h-4 w-4" /></span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate max-w-[180px]" title={a.name}>{a.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{(a.size / 1024).toFixed(1)} KB{a.isText ? " • text" : ""}</p>
-                        </div>
-                        <button type="button" aria-label={`Remove ${a.name}`} className="ml-1 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-muted/40" onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))} title="Remove file">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
+          <div className="relative group rounded-2xl border shadow-sm transition-all duration-200 border-feature-border bg-card/60 backdrop-blur-sm">
             <label htmlFor="project-idea" className="sr-only">Describe your project idea</label>
             <textarea
               id="project-idea"
               aria-describedby="idea-hint"
               value={userText}
-              onChange={(e) => setUserText(e.target.value)}
+              onChange={(e) => setUserText(e.target.value.slice(0, MAX_PROMPT))}
               onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); handleGenerate(); } }}
               className="w-full px-5 sm:px-6 py-4 pb-14 sm:pb-16 rounded-2xl text-base dark:text-primary/80 sm:text-lg border border-transparent shadow-sm text-foreground focus:outline-none bg-transparent placeholder-muted-foreground dark:placeholder:text-primary/80 resize-none overflow-y-auto"
               placeholder={displayedText}
@@ -329,14 +269,18 @@ const Hero = () => {
             {/* Bottom toolbar */}
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-end pr-3 sm:pr-4 pl-2 sm:pl-3 pb-3 sm:pb-4 pointer-events-none">
               <div className="flex items-center gap-3 pointer-events-auto">
-                <span className="text-[11px] text-muted-foreground select-none">
-                  {userText.length}/{2000}
-                </span>
+                <div className="flex flex-col items-end">
+                  {userText.trim().length === 0 ? null : (
+                    <div className={`text-[11px] select-none ${userText.trim().length >= MIN_PROMPT ? "text-emerald-600" : "text-rose-600"}`}>
+                      {userText.trim().length} / {MAX_PROMPT} {userText.trim().length >= MIN_PROMPT ? "(ready)" : `(need ${MIN_PROMPT - userText.trim().length} more)`}
+                    </div>
+                  )}
+                </div>
                 <Button
                   type="button"
                   size="sm"
                   onClick={handleGenerate}
-                  disabled={!userText.trim() && !displayedText.trim()}
+                  disabled={userText.trim() ? userText.trim().length < MIN_PROMPT : !displayedText.trim()}
                   className="inline-flex items-center gap-1"
                 >
                   Generate

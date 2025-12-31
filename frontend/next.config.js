@@ -2,48 +2,52 @@
 const nextConfig = {
   // Enable standalone output for Docker
   output: 'standalone',
-  // 1. Ignore TS/ESLint during build for faster production builds
+
+  // Ignore TS/ESLint during build for faster production builds
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // 2. Optimize heavy package imports
-  optimizePackageImports: [
-    "lucide-react",
-    "recharts",
-    "date-fns",
-    "framer-motion",
-    "@tanstack/react-query",
-    "@radix-ui/react-accordion",
-    "@radix-ui/react-alert-dialog",
-    "@radix-ui/react-aspect-ratio",
-    "@radix-ui/react-avatar",
-    "@radix-ui/react-checkbox",
-    "@radix-ui/react-collapsible",
-    "@radix-ui/react-context-menu",
-    "@radix-ui/react-dialog",
-    "@radix-ui/react-dropdown-menu",
-    "@radix-ui/react-hover-card",
-    "@radix-ui/react-label",
-    "@radix-ui/react-menubar",
-    "@radix-ui/react-navigation-menu",
-    "@radix-ui/react-popover",
-    "@radix-ui/react-progress",
-    "@radix-ui/react-radio-group",
-    "@radix-ui/react-scroll-area",
-    "@radix-ui/react-select",
-    "@radix-ui/react-separator",
-    "@radix-ui/react-slider",
-    "@radix-ui/react-slot",
-    "@radix-ui/react-switch",
-    "@radix-ui/react-tabs",
-    "@radix-ui/react-toast",
-    "@radix-ui/react-toggle",
-    "@radix-ui/react-toggle-group",
-    "@radix-ui/react-tooltip",
-  ],
+
+  // Image configuration
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'tissirai.fojas.ai',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
+  },
+
+  // Environment variables available at runtime
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
+    NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || '/api/auth',
+  },
+
+  // Disable x-powered-by header
+  poweredByHeader: false,
+
+  // Enable compression
+  compress: true,
+
+  // Experimental features
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "date-fns",
+      "framer-motion",
+      "@tanstack/react-query",
+    ],
+  },
 }
 
 module.exports = nextConfig 

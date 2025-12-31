@@ -1,10 +1,12 @@
+"use client";
 import Navigation from "@/components/Navigation";
 import FullFeatures from "@/components/FullFeatures";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { Lightbulb, Brain, GitBranch, FileText, Check } from "lucide-react";
-
+import { useAuth } from '@/context/AuthContext';
 export default function FeaturesPage() {
+  const { subscription } = useAuth();
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -41,7 +43,7 @@ export default function FeaturesPage() {
         </section>
         
         <FullFeatures />
-        <CTA />
+        {subscription === null || subscription?.status !== 'active' ?  <CTA /> : null}
       </main>
       
       <Footer />

@@ -1,25 +1,65 @@
 'use client'
-import { useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Github, Sparkles, ArrowRight, Zap, Brain, FileText, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+import { getGoogleLoginUrl, getGithubLoginUrl } from "@/services/auth.service";
 
-const SignupPage = () => {
+const SignupPageInner = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { register } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGoogleLogin = () => {
+    const url = getGoogleLoginUrl("/projects", window.location.pathname);
+    window.location.href = url;
+  };
+
+  const handleGithubLogin = () => {
+    const url = getGithubLoginUrl("/projects", window.location.pathname);
+    window.location.href = url;
+  };
+
+  useEffect(() => {
+    const err = searchParams.get('error');
+    if (err) setError(err);
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 2000);
+    setError(null);
+    try {
+      await register({ firstName, lastName, email, password });
+      router.push("/projects");
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : "Failed to sign up";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -30,7 +70,7 @@ const SignupPage = () => {
           {/* Logo */}
           <div className="flex items-center justify-between">
            <Link href="/" className="flex items-center space-x-3">
-            <img src="/logos/fromscratch.png" alt="FromScratch.ai Logo" className="h-10 w-10 rounded-md" /> 
+            <img src="/logos/fromScratch.png" alt="FromScratch.ai Logo" className="h-10 w-10 rounded-md" /> 
             <span className="text-xl font-semibold">FromScratch.ai</span>
           </Link>
             <button
@@ -47,8 +87,6 @@ const SignupPage = () => {
             <p className="text-muted-foreground">Start transforming your ideas into reality</p>
           </div>
 
- 
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
@@ -59,6 +97,8 @@ const SignupPage = () => {
                   type="text"
                   placeholder="John"
                   className="h-12"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   required
                 />
               </div>
@@ -69,6 +109,8 @@ const SignupPage = () => {
                   type="text"
                   placeholder="Doe"
                   className="h-12"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   required
                 />
               </div>
@@ -81,6 +123,8 @@ const SignupPage = () => {
                 type="email"
                 placeholder="Email"
                 className="h-12"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -93,6 +137,8 @@ const SignupPage = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   className="h-12 pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <Button
@@ -119,6 +165,8 @@ const SignupPage = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
                   className="h-12 pr-10"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
                 <Button
@@ -149,11 +197,11 @@ const SignupPage = () => {
                 className="text-sm text-muted-foreground leading-relaxed"
               >
                 I agree to the{" "}
-                <Link href="/terms" className="text-foreground hover:underline">
+                <Link href="/terms-of-service" className="text-foreground hover:underline">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="text-foreground hover:underline">
+                <Link href="/privacy-policy" className="text-foreground hover:underline">
                   Privacy Policy
                 </Link>
               </label>
@@ -176,6 +224,11 @@ const SignupPage = () => {
                 </div>
               )}
             </Button>
+
+            {error && (
+              <p className="text-sm text-red-500 mt-2">{error}</p>
+            )}
+
           </form>
 
           {/* Footer */}
@@ -237,6 +290,7 @@ const SignupPage = () => {
             <Button 
               variant="outline" 
               className="w-full h-12 bg-background hover:bg-muted transition-colors"
+              onClick={handleGoogleLogin}
             >
               <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -250,6 +304,7 @@ const SignupPage = () => {
             <Button 
               variant="outline" 
               className="w-full h-12 bg-background hover:bg-muted transition-colors"
+                onClick={handleGithubLogin}
             >
               <Github className="h-5 w-5 mr-3" />
               Continue with GitHub
@@ -260,6 +315,14 @@ const SignupPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const SignupPage = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignupPageInner />
+    </Suspense>
   );
 };
 

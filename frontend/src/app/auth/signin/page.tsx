@@ -1,24 +1,69 @@
 'use client'
-import { useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Github, Sparkles, ArrowRight ,Bot, Zap, Brain, Sun, Moon } from "lucide-react";
 import NewsSlideshow from "@/components/NewsSlideshow";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+import { getGoogleLoginUrl, getGithubLoginUrl } from "@/services/auth.service";
 
-const SigninPage = () => {
+const SigninPageInner = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [lastUsed, setLastUsed] = useState<string | null>(null);
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const stored = localStorage.getItem('lastLoginMethod');
+    setLastUsed(stored);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 2000);
+    setError(null);
+    try {
+      await login({ email, password });
+      localStorage.setItem('lastLoginMethod', 'email');
+      setLastUsed('email');
+      router.push("/projects");
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : "Failed to sign in";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleGoogleLogin = () => {
+    const url = getGoogleLoginUrl("/projects", window.location.pathname);
+    window.location.href = url;
+    localStorage.setItem('lastLoginMethod', 'google');
+    setLastUsed('google');
+  };
+
+  const handleGithubLogin = () => {
+    const url = getGithubLoginUrl("/projects", window.location.pathname);
+    window.location.href = url;
+    localStorage.setItem('lastLoginMethod', 'github');
+    setLastUsed('github');
+  };
+
+  useEffect(() => {
+    const err = searchParams.get('error');
+    if (err) setError(err);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex">
@@ -28,7 +73,7 @@ const SigninPage = () => {
           {/* Logo */}
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-3">
-              <img src="/logos/fromscratch.png" alt="FromScratch.ai Logo" className="h-10 w-10 rounded-md" /> 
+              <img src="/logos/fromScratch.png" alt="FromScratch.ai Logo" className="h-10 w-10 rounded-md" /> 
               <span className="text-xl font-semibold">FromScratch.ai</span>
             </Link>
             <button
@@ -50,6 +95,8 @@ const SigninPage = () => {
             <Button 
               variant="outline" 
               className="w-full h-12 bg-background hover:bg-muted transition-colors"
+              type="button"
+              onClick={handleGoogleLogin}
             >
               <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -58,17 +105,31 @@ const SigninPage = () => {
                 <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               Continue with Google
-              <div className="ml-auto bg-primary-glow text-primary-foreground px-2 py-1 rounded text-xs font-medium">
-                Last used
-              </div>
+
+              {lastUsed === 'google' ? (
+                <div className="ml-auto bg-primary-glow text-primary-foreground px-2 py-1 rounded text-xs font-medium">
+                  Last used
+                </div>
+              ) : (
+                <div className="ml-auto px-2 py-1" />
+              )}
             </Button>
             
             <Button 
               variant="outline" 
               className="w-full h-12 bg-background hover:bg-muted transition-colors"
+              type="button"
+              onClick={handleGithubLogin}
             >
               <Github className="h-5 w-5 mr-3" />
               Continue with GitHub
+              {lastUsed === 'github' ?(
+                <div className="ml-auto bg-primary-glow text-primary-foreground px-2 py-1 rounded text-xs font-medium">
+                  Last used
+                </div>
+              ):(
+                <div className="ml-auto px-2 py-1" />
+              )}
             </Button>
           </div>
 
@@ -85,12 +146,22 @@ const SigninPage = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium flex justify-between items-center"> <span>Email</span>
+              {lastUsed === 'email' ? (
+                <div className="bg-primary-glow text-primary-foreground px-2 py-1 rounded text-xs font-medium">
+                  Last used
+                </div>
+              ) : (
+                <div className="ml-auto px-2 py-1" />
+              )}
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Email"
                 className="h-12"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -99,7 +170,7 @@ const SigninPage = () => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                 <Link 
-                  href="/forgot-password" 
+                  href="/auth/forgot-password" 
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Forgot password?
@@ -111,6 +182,8 @@ const SigninPage = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   className="h-12 pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <Button
@@ -128,6 +201,10 @@ const SigninPage = () => {
                 </Button>
               </div>
             </div>
+
+            {error && (
+              <p className="text-sm text-red-500 mt-2">{error}</p>
+            )}
 
             <Button
               type="submit"
@@ -170,6 +247,14 @@ const SigninPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const SigninPage = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SigninPageInner />
+    </Suspense>
   );
 };
 

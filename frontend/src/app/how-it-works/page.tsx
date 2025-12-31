@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Lightbulb, Brain, FileText, SlidersHorizontal, CheckCircle, Upload, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function HowItWorksPage() {
 const steps = [
@@ -56,8 +57,6 @@ const steps = [
     ]
   }
 ];
-
-
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -126,50 +125,8 @@ const steps = [
             </div>
           </div>
         </section>
-
-        {/* CTA */}
-        <section className="py-16 sm:py-20">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative overflow-hidden rounded-3xl border border-feature-border bg-card/60 p-6 sm:p-8 backdrop-blur-sm">
-              {/* background accents */}
-              <div className="pointer-events-none absolute -right-8 -top-10 h-64 w-64 rounded-full bg-primary/20 blur-3xl opacity-40" />
-              <div className="pointer-events-none absolute -left-10 bottom-0 h-56 w-56 rounded-full bg-primary/10 blur-3xl opacity-40" />
-
-              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="max-w-xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-feature-border bg-background/70 px-3 py-1 text-xs text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Smart planning, instant draft
-                  </div>
-                  <h3 className="mt-3 text-xl sm:text-2xl font-semibold text-foreground">Ready to turn your idea into a plan?</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">It takes less than a minute to get your first draft. Tweak anything and export when you’re happy.</p>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-feature-border bg-background/70 px-2.5 py-1">
-                      <ShieldCheck className="h-3.5 w-3.5 text-primary" /> No credit card
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-feature-border bg-background/70 px-2.5 py-1">
-                      <CheckCircle className="h-3.5 w-3.5 text-primary" /> 1-minute draft
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/">
-                    <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
-                      Start free
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/#pricing">
-                    <Button variant="ghost" className="text-primary border-primary/80 border-2 hover:bg-primary/80 hover:text-white">See pricing</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
+      <Footer />
     </div>
   );
 }
