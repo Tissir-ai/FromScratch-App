@@ -3,21 +3,23 @@ import type { Payment } from '../models/Payment.js';
 
 interface RecordPaymentInput {
   userId: string;
-  subscriptionId: string;
   amount: number;
   currency: string;
-  status: string;
   stripePaymentId?: string;
 }
 
 export async function recordPayment(input: RecordPaymentInput): Promise<Payment> {
+  // If a stripePaymentId is provided, attempt to find an existing payment to avoid duplicates
+  if (input.stripePaymentId) {
+    const existing = await prisma.payment.findFirst({ where: { stripePaymentId: input.stripePaymentId } });
+    if (existing) return existing;
+  }
+
   const payment = await prisma.payment.create({
     data: {
       userId: input.userId,
-      subscriptionId: input.subscriptionId,
       amount: input.amount,
       currency: input.currency,
-      status: input.status,
       stripePaymentId: input.stripePaymentId ?? null,
     },
   });

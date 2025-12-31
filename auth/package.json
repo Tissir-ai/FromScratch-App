@@ -21,7 +21,8 @@
     "express": "^4.21.1",
     "google-auth-library": "^9.15.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.15"
+    "nodemailer": "^6.9.15",
+    "stripe": "^11.18.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",

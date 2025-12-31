@@ -9,7 +9,8 @@ import {
 	githubCallback,
 	logout,
 	forgotPasswordController,
-	resetPasswordController
+	resetPasswordController,
+	changePasswordController
 } from '../controllers/authController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
@@ -20,6 +21,7 @@ router.post('/login', login);
 router.post('/logout', logout);
 router.post('/forgot-password', forgotPasswordController);
 router.post('/reset-password', resetPasswordController);
+router.post('/change-password', authenticate, changePasswordController);
 router.get('/google/login', googleLoginRedirect);
 router.get('/google/callback', googleCallback);
 router.get('/github/login', githubLoginRedirect);

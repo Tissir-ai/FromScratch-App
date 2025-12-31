@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Starter",
+    "price": "0.00",
+    "oldPrice": null,
+    "billingPeriod": "forever",
+    "description": [
+      "Perfect for individual developers and small projects",
+      "3 projects to build",
+      "PDF export",
+      "Basic GitHub export"
+    ],
+    "config": { 
+     "nbrProjects": 2,
+     "allowPages": ["diagram","reports","requirements","settings"] ,
+     "pdfExport": false,
+     "githubExport": false,
+     "chatTokens": 3
+    },
+    "isActive": true,
+    "isPopular": false
+  },
+  {
+    "name": "Student",
+    "price": "9.00",
+    "oldPrice": null,
+    "billingPeriod": "month",
+    "description": [
+      "Perfect for students and academic projects",
+      "20 projects per month",
+      "GitHub export",
+      "PDF & Markdown export"
+    ],
+    "config": { 
+     "nbrProjects": 2,
+     "allowPages": ["diagram","reports","requirements","settings"] ,
+     "pdfExport": true,
+     "githubExport": true,
+     "chatTokens": 4
+    },
+    "isActive": true,
+    "isPopular": false
+  },
+  {
+    "name": "Professional",
+    "price": "29.00",
+    "oldPrice": "39.00",
+    "billingPeriod": "month",
+    "description": [
+      "Ideal for professional developers and growing teams",
+      "Unlimited projects",
+      "Advanced AI recommendations",
+      "Priority support",
+      "Full GitHub sync & exports"
+    ],
+   "config": { 
+     "nbrProjects": 10,
+     "allowPages": ["dashboard","diagram","reports","requirements","tasks","logs","settings"],
+     "pdfExport": true,
+     "githubExport": true,
+     "chatTokens": 10
+    },
+    "isActive": true,
+    "isPopular": true
+  },
+  {
+    "name": "Enterprise",
+    "price": "50.00",
+    "oldPrice": null,
+    "billingPeriod": "custom",
+    "description": [
+      "Built for large teams and enterprise requirements",
+      "Dedicated account manager",
+      "SSO & advanced security",
+      "Custom integrations and on-prem options"
+    ],
+    "config": { 
+     "nbrProjects": 50,
+     "allowPages": ["dashboard","diagram","reports","requirements","tasks","logs","settings"] ,
+     "pdfExport": true,
+     "githubExport": true,
+     "chatTokens": 50
+    },
+    "isActive": true,
+    "isPopular": false
+  }
+]

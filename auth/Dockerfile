@@ -1,44 +1,57 @@
-# Multi-stage build for FromScratch-auth (Node + Express + TypeScript)
-
-FROM node:20-slim AS build
+# ============ BUILD STAGE ============
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install system deps needed by Prisma (OpenSSL/libssl)
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends ca-certificates openssl libssl-dev \
-	&& rm -rf /var/lib/apt/lists/*
+# Install dependencies for native modules
+RUN apk add --no-cache libc6-compat openssl
 
-# Install dependencies and generate Prisma client
-COPY package.json tsconfig.json ./
-COPY prisma ./prisma
-RUN npm install
+# Copy package files
+COPY package*.json ./
+
+# Install ALL dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
 RUN npx prisma generate
 
-# Copy source and build
-COPY src ./src
+# Build TypeScript
 RUN npm run build
 
-# Runtime image (Debian-based to ensure OpenSSL compatibility for Prisma)
-FROM node:20-slim AS runtime
+# ============ PRODUCTION STAGE ============
+FROM node:20-alpine AS runner
 
 WORKDIR /app
+
+# Install runtime dependencies
+RUN apk add --no-cache libc6-compat openssl curl
 
 ENV NODE_ENV=production
 
-# Only copy needed artifacts
-COPY package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY prisma ./prisma
-COPY .env .env
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 authuser
 
-# Install runtime dependencies required by Prisma's query engine
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends ca-certificates openssl libssl-dev \
-	&& rm -rf /var/lib/apt/lists/*
+# Copy package files and install production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy Prisma schema and generate client
+COPY --from=builder /app/prisma ./prisma
+RUN npx prisma generate
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+
+# Set correct permissions
+RUN chown -R authuser:nodejs /app
+
+USER authuser
 
 EXPOSE 4000
 
-# Default command; docker-compose can override to run migrations first
-CMD ["node", "dist/server.js"]
+# Start command: run migrations then start server
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/server.js"]

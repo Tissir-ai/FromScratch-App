@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getCurrentUser, loginUser, registerUser, loginOrRegisterOAuthUser, forgotPassword, resetPassword } from '../services/authService.js';
+import { getCurrentUser, getCurrentUserWithSubscription, loginUser, registerUser, loginOrRegisterOAuthUser, forgotPassword, resetPassword, changePassword } from '../services/authService.js';
 import type { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 import { getGoogleAuthUrl, getGoogleUserFromCode } from '../services/googleAuthService.js';
 import { getGithubAuthUrl, getGithubUserFromCode } from '../services/githubAuthService.js';
@@ -62,8 +62,8 @@ export async function currentUser(req: AuthenticatedRequest, res: Response, next
       return;
     }
 
-    const user = await getCurrentUser(userId);
-    res.status(200).json(user);
+    const { user, subscription, plan } = await getCurrentUserWithSubscription(userId);
+    res.status(200).json({ user, subscription, plan });
   } catch (err) {
     next(err);
   }
@@ -187,6 +187,22 @@ export async function resetPasswordController(req: Request, res: Response, next:
     const { token, newPassword } = req.body as { token: string; newPassword: string };
     await resetPassword(token, newPassword);
     res.status(200).json({ message: 'Password has been reset successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function changePasswordController(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const { oldPassword, newPassword } = req.body as { oldPassword: string; newPassword: string };
+    await changePassword(userId, oldPassword, newPassword);
+    res.status(200).json({ message: 'Password updated successfully.' });
   } catch (err) {
     next(err);
   }

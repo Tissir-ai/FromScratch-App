@@ -25,7 +25,7 @@ model User {
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt
 
-  subscriptions    Subscription[]
+  subscription     Subscription?
   payments         Payment[]
   passwordResets   PasswordReset[]
 
@@ -34,12 +34,17 @@ model User {
 }
 
 model SubscriptionPlan {
-  id           String          @id @default(cuid())
-  name         String
-  price        Decimal         @db.Decimal(10, 2)
-  billingPeriod String         @map("billing_period")
-  description  String?
-  createdAt    DateTime        @default(now()) @map("created_at")
+  id            String          @id @default(cuid())
+  name          String
+  price         Decimal         @db.Decimal(10, 2)
+  oldPrice      Decimal?        @db.Decimal(10, 2)
+  billingPeriod String          @map("billing_period")
+  description   String[]
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @default(now()) @map("updated_at")
+  config        Json?
+  isActive      Boolean         @default(true) @map("is_active")
+  isPopular     Boolean         @default(false) @map("is_popular")
 
   subscriptions Subscription[]
 
@@ -48,17 +53,18 @@ model SubscriptionPlan {
 
 model Subscription {
   id                   String     @id @default(cuid())
-  userId               String     @map("user_id")
+  userId               String     @map("user_id") @unique
   planId               String     @map("plan_id")
+  paymentId            String?    @map("payment_id") @unique
   status               String
   startDate            DateTime   @map("start_date")
   endDate              DateTime?  @map("end_date")
   autoRenew            Boolean    @map("auto_renew")
-  stripeSubscriptionId String?    @map("stripe_subscription_id")
-
+  
   user       User             @relation(fields: [userId], references: [id])
   plan       SubscriptionPlan @relation(fields: [planId], references: [id])
-  payments   Payment[]
+  payment    Payment?         @relation(fields: [paymentId], references: [id])
+  
 
   @@map("subscriptions")
 }
@@ -66,15 +72,13 @@ model Subscription {
 model Payment {
   id              String    @id @default(cuid())
   userId          String    @map("user_id")
-  subscriptionId  String    @map("subscription_id")
   amount          Decimal   @db.Decimal(10, 2)
   currency        String
-  status          String
   stripePaymentId String?   @map("stripe_payment_id")
   createdAt       DateTime  @default(now()) @map("created_at")
 
   user         User         @relation(fields: [userId], references: [id])
-  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+  subscription Subscription?
 
   @@map("payments")
 }

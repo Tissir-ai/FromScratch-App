@@ -76,6 +76,25 @@ export async function getCurrentUser(userId: string): Promise<User> {
   return user;
 }
 
+// Returns the user along with their most-recent active subscription and its plan (if any)
+export async function getCurrentUserWithSubscription(userId: string): Promise<any> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      subscription: { include: { plan: true } },
+    },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const subscription = user.subscription ?? null;
+  const plan = subscription ? subscription.plan : null;
+
+  return { user, subscription, plan } as any;
+}
+
 export async function loginOrRegisterOAuthUser(oauthUser: OAuthUser): Promise<{ user: User; tokens: AuthTokens }> {
   const { provider, providerId, email, firstName, lastName } = oauthUser;
 
@@ -186,4 +205,27 @@ export async function resetPassword(token: string, newPassword: string): Promise
       data: { used: true },
     }),
   ]);
+}
+
+export async function changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
+  if (!newPassword || !newPassword.trim()) {
+    throw new AppError('New password is required', 400);
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (user.provider !== 'credentials' || !user.passwordHash) {
+    throw new AppError('Password change is not available for this account', 400);
+  }
+
+  const isValid = await comparePassword(oldPassword, user.passwordHash);
+  if (!isValid) {
+    throw new AppError('Current password is incorrect', 401);
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 }
