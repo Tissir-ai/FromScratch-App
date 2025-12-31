@@ -7,7 +7,7 @@ services:
     container_name: fromscratch-frontend
     restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
     networks:
       - fromscratch-network
     expose:
@@ -54,13 +54,12 @@ services:
       - ./auth/.env
 
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=4000
       - DATABASE_URL=postgresql://postgres:postgres@auth-db:5432/fromscratch_auth?schema=public
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
       - JWT_ACCESS_EXPIRES_IN=15m
-      - CORS_ORIGIN=https://tissirai.fojas.ai,http://tissirai.fojas.ai
-      - COOKIE_DOMAIN=.tissirai.fojas.ai
+      - CORS_ORIGIN=http://localhost:3106
     depends_on:
       auth-db:
         condition: service_healthy
@@ -116,7 +115,7 @@ services:
       - MODEL_PROVIDER=nvidia
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
       - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=https://tissirai.fojas.ai,http://tissirai.fojas.ai
+      - CORS_ORIGINS=https://tissirai.fojas.ai,http://tissirai.fojas.ai,http://localhost:3106
     expose:
       - "8000"
     networks:
@@ -152,11 +151,7 @@ services:
       - MODEL_PROVIDER=nvidia
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
       - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=https://tissirai.fojas.ai,http://tissirai.fojas.ai
-      - MODEL_PROVIDER=nvidia
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
-      - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=http://localhost:3106
+      - CORS_ORIGINS=https://tissirai.fojas.ais.ai
     networks:
       - fromscratch-network
     depends_on:
