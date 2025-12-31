@@ -23,7 +23,7 @@ from app.repositories.requirements_repo import create_requirement , delete_requi
 from app.repositories.logs_repo import create_log, delete_log 
 from app.repositories.chat_repo import create_chat , delete_chat
 from app.services.role_service import delete_role , get_roles_by_project
-from app.repositories.users_repo import assign_role, create_user , delete_user , get_users_by_project
+from app.repositories.users_repo import set_role, create_user , delete_user , get_users_by_project
 
 from app.services.role_service import get_roles_info_by_project
 from app.services.user_service import get_members_info
@@ -53,7 +53,6 @@ async def create_project_with_roles(payload: object, current_user: object) -> Pr
             "view_logs", "create_logs", "edit_logs", "delete_logs",
         ],
         "Manager": [
-            "manage_project",
             "view_diagrams","create_diagrams", "edit_diagrams",
             "view_tasks", "create_tasks", "edit_tasks",
             "view_requirements", "create_requirements", "edit_requirements",
@@ -85,7 +84,7 @@ async def create_project_with_roles(payload: object, current_user: object) -> Pr
         # Add owner to project members
         user_obj = await create_user(User(info_id=creator_id, name=current_user.get("name"), project_id=project.id))
         # Assign the Owner role to the user
-        await assign_role(user_obj.id, owner_role.id)
+        await set_role(user_obj.id, owner_role.id)
         # Add user to project members by id
         await add_member(project.id, user_obj.id)
     

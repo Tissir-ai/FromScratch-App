@@ -12,7 +12,6 @@ from app.api.v1.requirements import router as requirements_router
 from app.api.v1.tasks import router as tasks_router
 from app.api.v1.logs import router as logs_router
 from app.api.v1.roles import router as roles_router
-from app.api.v1.users import router as users_router
 from app.api.v1.realtime import router as realtime_router
 
 from app.api.v1.chat import router as chat_router
@@ -42,7 +41,6 @@ def create_app() -> FastAPI:
     app.include_router(tasks_router, prefix="/api")
     app.include_router(logs_router, prefix="/api")
     app.include_router(roles_router, prefix="/api")
-    app.include_router(users_router, prefix="/api")
     app.include_router(realtime_router, prefix="/api")
     app.include_router(chat_router, prefix="/api")
 

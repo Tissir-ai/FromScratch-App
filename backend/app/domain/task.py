@@ -10,17 +10,16 @@ class TaskStructure(BaseModel):
     assignee_id:  PydanticObjectId | None = None
     status: str = "backlog"  # backlog, todo, in-progress, review, done
     priority: str = "medium"  # low, medium, high, critical
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     asign_date: datetime | None = None
     due_date: datetime | None = None
-
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 class TaskDomain(Document):
     id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
     project_id: PydanticObjectId
     data: List[TaskStructure] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
         name = "tasks"

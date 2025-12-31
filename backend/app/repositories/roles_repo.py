@@ -14,11 +14,11 @@ async def get_role_by_id(doc_id: str) -> RoleDomainModel | None:
     return await RoleDomainModel.get(doc_id)
 
 
-async def update_role(doc_id: str, data: dict) -> RoleDomainModel | None:
-    doc = await RoleDomainModel.get(doc_id)
+async def update_role(payload: RoleDomainModel) -> RoleDomainModel | None:
+    doc = await RoleDomainModel.get(payload.id)
     if not doc:
         return None
-    for k, v in data.items():
+    for k, v in payload.dict().items():
         setattr(doc, k, v)
     await doc.save()
     return doc

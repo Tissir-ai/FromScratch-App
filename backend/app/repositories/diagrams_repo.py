@@ -7,7 +7,6 @@ from datetime import datetime
 async def create_diagram(diagram: Diagram) -> Diagram:
     return await diagram.insert()
 
-
 async def get_diagram_Container_by_project(project_id: str | PydanticObjectId) -> Diagram | None:
     try:
         pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
@@ -41,7 +40,6 @@ async def update_diagram_item(project_id: str | PydanticObjectId, data: DiagramS
             return data
     return None
 
-
 async def remove_diagram_item(project_id: str | PydanticObjectId, doc_id: str) -> DiagramStructure | None:
     """Remove an item inside the project's Diagram document and persist it."""
     try:
@@ -60,7 +58,6 @@ async def remove_diagram_item(project_id: str | PydanticObjectId, doc_id: str) -
     return None
 
 async def get_diagrams_by_project(project_id: str | PydanticObjectId) -> List[DiagramStructure]:
-
         try:
             pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
         except Exception:

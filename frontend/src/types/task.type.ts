@@ -4,7 +4,6 @@ export type Status = "backlog" | "todo" | "in-progress" | "review" | "done";
 export interface UserRef {
   id: string;
   name: string;
-  email: string;
 }
 
 export interface TaskItem {
@@ -14,8 +13,8 @@ export interface TaskItem {
   status: Status;
   priority: Priority;
   assignee?: UserRef;
-  tags?: string[];
-  points?: number;
+  asign_date : Date;
+  due_date  : Date;
   createdAt: string;
   updatedAt: string;
 }

@@ -41,7 +41,7 @@ async def delete_user(user_id: str) -> User | None:
     return user
 
 
-async def assign_role(user_id: PydanticObjectId, role_id: PydanticObjectId) -> User | None:
+async def set_role(user_id: str, role_id: str) -> User | None:
     """Assign a role to a user (used when owner invites members and sets their role)."""
     user = await User.get(user_id)
     if not user:

@@ -9,7 +9,7 @@ from app.repositories.users_repo import (
     get_user,
     update_user,
     delete_user,
-    assign_role,
+    set_role,
     get_user_by_info_id,
     get_users_by_project
 )
@@ -21,10 +21,21 @@ from app.services.role_service import user_has_permission
 async def create(payload: User) -> User:
     return await create_user(payload)
 
+async def invite_user(project_id: str, payload: object) -> dict:
+    # Accept either a dict or a Pydantic object (request model)
+    info_id = payload.get("info_id") if isinstance(payload, dict) else getattr(payload, "info_id", None)
+    user = await get_user_by_info_id(info_id)
+    if user:
+        if str(user.project_id) == str(project_id):
+            return {"message": "User already a member of the project"}
+        # if the user exists but belongs to a different project, treat the invite as successful
+        return {"message": "User invited successfully"}
+    # user does not exist yet - treat invitation as successful
+    return {"message": "User invited successfully"}
+    
 
 async def list_all() -> List[User]:
     return await list_users()
-
 
 async def get_by_id(user_id: str) -> User | None:
     return await get_user(user_id)
@@ -47,6 +58,7 @@ async def get_members_info(project_id: str) -> List[dict]:
 
             members_info.append({
                 "name": u.name,
+                "info_id": u.info_id,
                 "role": role_label,
                 "team": "--" if role_label in ("guest", "owner") else role_name_lower,
             })
@@ -66,9 +78,26 @@ async def update(user_id: str, data: dict) -> User | None:
     return await update_user(user_id, data)
 
 
-async def remove(user_id: str) -> User | None:
+async def remove(prject_id :str,user_id: str) -> User | None:
+    user = await get_user(user_id)
+    if user.project_id != prject_id:
+        return None
     return await delete_user(user_id)
 
-async def set_role(user_id: str, role_id: str) -> User | None:
-    """Assign a role to a user (used by project owner when inviting members)."""
-    return await assign_role(user_id, role_id)
+async def assign_role(Project_id: str, payload: object) -> User | None:
+    # Support dict or Pydantic model payloads
+    user_id = payload.get("user_id") if isinstance(payload, dict) else getattr(payload, "user_id", None)
+    role_id = payload.get("role_id") if isinstance(payload, dict) else getattr(payload, "role_id", None)
+
+    if not user_id or not role_id:
+        return None
+
+    user = await get_user(user_id)
+    if not user:
+        return None
+    if str(user.project_id) != str(Project_id):
+        return None
+    role = await get_role_by_id(role_id)
+    if not role:
+        return None
+    return await set_role(user.id, role.id)

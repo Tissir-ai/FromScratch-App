@@ -27,11 +27,22 @@ async def get_roles_info_by_project(project_id: str) -> List[dict] | None:
             users = await get_users_by_role(role.id)
             result.append({"name": role.name, "users_count": len(users) if users else 0})
     return result
-    
 
-async def create(project_id: UUID, payload: RoleDomain) -> RoleDomain:
+async def get_roles_and_users_by_project(project_id: str) -> List[dict] | None:
+    roles = await get_roles_by_project(project_id)
+    result = []
+    if roles:
+        for role in roles:
+            name = (getattr(role, "name", "") or "").lower()
+            if name in ("guest", "owner"):
+                continue
+            users = await get_users_by_role(role.id)
+            result.append({"id": role.id, "name": role.name, "permission" : role.permissions ,  "users": users if users else []})
+    return result
+
+
+async def create(payload: RoleDomain) -> RoleDomain:
     """Create a role scoped to a specific project."""
-    payload.project_id = project_id
     return await create_role(payload)
 
 
@@ -43,11 +54,11 @@ async def get_by_id(doc_id: UUID) -> RoleDomain | None:
     return await get_role_by_id(doc_id)
 
 
-async def update(doc_id: UUID, data: dict) -> RoleDomain | None:
-    return await update_role(doc_id, data)
+async def update(payload: RoleDomain) -> RoleDomain | None:
+    return await update_role(payload)
 
 
-async def remove(doc_id: UUID) -> RoleDomain | None:
+async def remove(doc_id: str) -> RoleDomain | None:
     return await delete_role(doc_id)
 
 
