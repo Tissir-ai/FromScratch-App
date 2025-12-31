@@ -5,6 +5,19 @@ import { getGoogleAuthUrl, getGoogleUserFromCode } from '../services/googleAuthS
 import { getGithubAuthUrl, getGithubUserFromCode } from '../services/githubAuthService.js';
 const frontendOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:3000';
 
+// Cookie configuration
+function getCookieOptions() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const domain = process.env.COOKIE_DOMAIN;
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax' as const,
+    path: '/',
+    ...(domain && { domain }),
+  };
+}
+
 
 function parseState(state?: string | undefined) {
   if (!state) return { ok: '/', err: '/' };
@@ -41,12 +54,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     const { accessToken, user } = { accessToken: result.tokens.accessToken, user: result.user };
 
     res
-      .cookie('access_token', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
+      .cookie('access_token', accessToken, getCookieOptions())
       .status(200)
       .json({ user });
   } catch (err) {
@@ -96,12 +104,7 @@ export async function googleCallback(req: Request, res: Response, next: NextFunc
 
     // After successful OAuth, set cookie and redirect back to frontend (use successPath)
     res
-      .cookie('access_token', tokens.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
+      .cookie('access_token', tokens.accessToken, getCookieOptions())
       .redirect(frontendOrigin + successPath);
   } catch (err) {
     const stateRaw = typeof req.query.state === 'string' ? req.query.state : undefined;
@@ -139,12 +142,7 @@ export async function githubCallback(req: Request, res: Response, next: NextFunc
 
     // After successful OAuth, set cookie and redirect back to frontend (use successPath)
     res
-      .cookie('access_token', tokens.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
+      .cookie('access_token', tokens.accessToken, getCookieOptions())
       .redirect(frontendOrigin + successPath);
   } catch (err) {
     const stateRaw = typeof req.query.state === 'string' ? req.query.state : undefined;
@@ -158,12 +156,7 @@ export async function githubCallback(req: Request, res: Response, next: NextFunc
 export async function logout(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     // Clear the access token cookie
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
+    res.clearCookie('access_token', getCookieOptions());
 
     res.status(200).json({ message: 'Logged out' });
   } catch (err) {
