@@ -74,21 +74,25 @@ jobs:
           git pull origin main
           
           # Create .env file with secrets from GitHub Actions
-          cat > .env << 'EOF'
-          NVIDIA_API_KEY=${NVIDIA_API_KEY}
-          STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-          STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-          GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-          GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-          GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-          GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-          GMAIL_USER=${GMAIL_USER}
-          GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+          cat > .env << EOF
+          NVIDIA_API_KEY=$NVIDIA_API_KEY
+          STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+          STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
+          GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+          GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+          GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID
+          GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET
+          GMAIL_USER=$GMAIL_USER
+          GMAIL_APP_PASSWORD=$GMAIL_APP_PASSWORD
           EOF
+          
+          # Verify .env was created
+          echo "✓ .env file created"
+          ls -la .env
           
           # Set restrictive permissions (only owner can read/write)
           chmod 600 .env
-          chown $USER:$USER .env
+          echo "✓ .env permissions set to 600"
           
           # Stop containers
           docker compose down
@@ -98,6 +102,8 @@ jobs:
           docker compose up -d --force-recreate
           
           # Show deployment status
+          echo "✓ Deployment completed!"
+          docker compose ps
           echo "Deployment completed!"
           docker compose ps
           
