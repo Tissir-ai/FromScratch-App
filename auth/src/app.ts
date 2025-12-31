@@ -21,6 +21,12 @@ app.use(
 // Stripe webhook requires the raw body. Mount the raw handler before the JSON body parser
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler);
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (_req, res) => {
+	res.status(200).json({ status: 'healthy', service: 'auth' });
+});
+
 app.use('/api', routes);
 
 app.use(errorHandler);
