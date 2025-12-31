@@ -1,21 +1,13 @@
-from pydantic import BaseModel
-from uuid import UUID, uuid4
+from beanie import Document, PydanticObjectId
+from pydantic import Field
 from typing import List
 
-class Role(BaseModel):
-    id: UUID = uuid4()
+
+class RoleDomain(Document):
+    id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
+    project_id: PydanticObjectId  # Project this role belongs to
     name: str  # e.g., admin, dev, designer
-    permissions: List[str] = []  # e.g., ["edit_diagrams", "view_tasks"]
+    permissions: List[str] = Field(default_factory=list)  # e.g., ["edit_diagrams", "view_tasks"]
 
-class Member(BaseModel):
-    user_id: UUID
-    role_id: UUID | None = None  # If None, default to guest
-
-class RoleDomain(BaseModel):
-    id: UUID = uuid4()
-    project_id: UUID
-    roles: List[Role] = []
-    members: List[Member] = []
-
-    class Config:
-        orm_mode = True
+    class Settings:
+        name = "roles"

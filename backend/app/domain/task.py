@@ -1,23 +1,26 @@
-from pydantic import BaseModel
-from uuid import UUID, uuid4
-from datetime import datetime
+from beanie import Document, PydanticObjectId
+from pydantic import BaseModel, Field
+from datetime import datetime, timezone
 from typing import List
-from pydantic import Field
 
 class TaskStructure(BaseModel):
-    id: UUID = uuid4()
+    id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
     title: str
     description: str | None = None
-    assignee_id: UUID | None = None
-    status: str = "pending"  # pending, in_progress, done
-    created_at: datetime = datetime.utcnow()
+    assignee_id:  PydanticObjectId | None = None
+    status: str = "backlog"  # backlog, todo, in-progress, review, done
+    priority: str = "medium"  # low, medium, high, critical
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    asign_date: datetime | None = None
     due_date: datetime | None = None
 
-class TaskDomain(BaseModel):
-    id: UUID = uuid4()
-    project_id: UUID
-    activeUsers: List[UUID] = Field(default_factory=list)
-    data: List[TaskStructure] = []
+class TaskDomain(Document):
+    id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
+    project_id: PydanticObjectId
+    data: List[TaskStructure] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    class Config:
-        orm_mode = True
+    class Settings:
+        name = "tasks"

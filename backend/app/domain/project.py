@@ -1,21 +1,23 @@
-from pydantic import BaseModel
-from uuid import UUID, uuid4
+from beanie import Document, PydanticObjectId
+from pydantic import Field
 from datetime import datetime
-from Member import Member
 
-class Project(BaseModel):
-    id: UUID = uuid4()
+
+class Project(Document):
+    id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
     name: str
     description: str | None = None
-    owner_id: Member  # User who created the project
-    members: list[Member] = []  # List of members who are members of the project
-    created_at: datetime = datetime.utcnow()
+    full_description: str | None = None
+    created_by: str
+    members: list[PydanticObjectId] = Field(default_factory=list)  # List of user IDs
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Linked domain IDs
-    tasks_id: UUID
-    diagrams_id: UUID
-    requirements_id: UUID
-    logs_id: UUID
-
-    class Config:
-        orm_mode = True
+    tasks_id:  PydanticObjectId | None = None
+    diagrams_id: PydanticObjectId | None = None
+    requirements_id: PydanticObjectId | None = None
+    logs_id: PydanticObjectId | None = None
+    chats_id: PydanticObjectId | None = None
+    class Settings:
+        name = "projects"

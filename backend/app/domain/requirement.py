@@ -1,19 +1,23 @@
-from pydantic import BaseModel
-from uuid import UUID, uuid4
+from beanie import Document , PydanticObjectId
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List
 
 class RequirementStructure(BaseModel):
-    id: UUID = uuid4()
+    id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
     title: str
+    category: str 
     description: str | None = None
-    type: str  # epic, feature, user_story
-    created_at: datetime = datetime.utcnow()
+    content: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-class RequirementDomain(BaseModel):
-    id: UUID = uuid4()
-    project_id: UUID
-    data: List[RequirementStructure] = []
+class RequirementDomain(Document):
+    id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
+    project_id: PydanticObjectId
+    data: List[RequirementStructure] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        orm_mode = True
+    class Settings:
+        name = "requirements"

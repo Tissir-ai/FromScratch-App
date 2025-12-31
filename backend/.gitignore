@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+
 build/
 develop-eggs/
 dist/
@@ -77,3 +78,5 @@ infra/migrations/**/__pycache__/
 
 # Node (in case of frontend bits later)
 node_modules/
+
+/infra/
