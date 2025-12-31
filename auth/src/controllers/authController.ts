@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getCurrentUser, getCurrentUserWithSubscription, loginUser, registerUser, loginOrRegisterOAuthUser, forgotPassword, resetPassword, changePassword } from '../services/authService.js';
+import { getCurrentUser,getUserById, getCurrentUserWithSubscription, loginUser, registerUser, loginOrRegisterOAuthUser, forgotPassword, resetPassword, changePassword } from '../services/authService.js';
 import type { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 import { getGoogleAuthUrl, getGoogleUserFromCode } from '../services/googleAuthService.js';
 import { getGithubAuthUrl, getGithubUserFromCode } from '../services/githubAuthService.js';
@@ -170,6 +170,21 @@ export async function logout(_req: Request, res: Response, next: NextFunction): 
     next(err);
   }
 }
+
+export async function getUserByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.params.id;
+    const user = await getUserById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    res.status(200).json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
 
 export async function forgotPasswordController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

@@ -48,6 +48,10 @@ export async function registerUser(input: RegisterInput): Promise<{ user: User; 
   return { user, tokens: { accessToken } };
 }
 
+export async function getUserById(userId: string): Promise<User | null> {
+  return prisma.user.findUnique({ where: { id: userId } });
+}
+
 export async function loginUser(input: LoginInput): Promise<{ user: User; tokens: AuthTokens }> {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user) {

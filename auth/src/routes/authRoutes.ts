@@ -10,7 +10,8 @@ import {
 	logout,
 	forgotPasswordController,
 	resetPasswordController,
-	changePasswordController
+	changePasswordController,
+	getUserByIdController
 } from '../controllers/authController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
@@ -27,5 +28,6 @@ router.get('/google/callback', googleCallback);
 router.get('/github/login', githubLoginRedirect);
 router.get('/github/callback', githubCallback);
 router.get('/me', authenticate, currentUser);
+router.get('/user/:id',authenticate ,getUserByIdController);
 
 export default router;
