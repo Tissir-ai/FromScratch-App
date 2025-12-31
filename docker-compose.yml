@@ -15,12 +15,7 @@ services:
     depends_on:
       - backend
       - auth
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+
 
   # ============== NGINX REVERSE PROXY ==============
   nginx:
@@ -59,7 +54,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@auth-db:5432/fromscratch_auth?schema=public
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
       - JWT_ACCESS_EXPIRES_IN=15m
-      - CORS_ORIGIN=http://tissirai.fojas.ai,http://localhost:3106
+      - CORS_ORIGIN=https://tissirai.fojas.ai,http://localhost:3106
     depends_on:
       auth-db:
         condition: service_healthy
@@ -115,7 +110,7 @@ services:
       - MODEL_PROVIDER=nvidia
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
       - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=http://tissirai.fojas.ai,http://localhost:3106
+      - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     expose:
       - "8000"
     networks:
@@ -151,7 +146,7 @@ services:
       - MODEL_PROVIDER=nvidia
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
       - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=http://tissirai.fojas.ai,http://localhost:3106
+      - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     networks:
       - fromscratch-network
     depends_on:
