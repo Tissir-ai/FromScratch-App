@@ -51,7 +51,7 @@ services:
     container_name: fromscratch-auth
     restart: unless-stopped
     env_file:
-      - ./auth/.env
+      - .env
 
     environment:
       - NODE_ENV=production
