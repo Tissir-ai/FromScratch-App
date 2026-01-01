@@ -69,10 +69,15 @@ export default function ProjectsPage() {
     }
 
   const loadProjects = async () => {
+    if (!user) {
+      setLoading(false)
+      router.push('/auth/signin')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchProjects()
+      const data = await fetchProjects(user)
       setProjects(data || [])
       setFilteredProjects(data || [])
     } catch (err) {
@@ -86,17 +91,21 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     loadProjects()
-  }, [])
+  }, [user])
 
 
   
   const handleCreate = async (payload: { name: string; description?: string }) => {
     if(!checkFeatures()) return;
+    if (!user) {
+      router.push('/auth/signin')
+      return
+    }
     try {
       const created = await createProject({
         name: payload.name,
         description: payload.description,
-      })
+      }, user)
       // Normalize backend _id to frontend id without indexing Project with "_id"
       const normalized = { ...created, id: (created as any)['_id'] ?? created.id }
       console.log("Created project:", normalized)
@@ -163,6 +172,10 @@ export default function ProjectsPage() {
 
   const handleGenerate = async (idea: string) => {
     if(!checkFeatures()) return;
+    if (!user) {
+      router.push('/auth/signin')
+      return
+    }
     // Reset generation state
     setGenerationIdea(idea)
     setGenerationSteps(GENERATION_STEPS)
@@ -180,6 +193,7 @@ export default function ProjectsPage() {
       // Poll for status
       await pollRunStatus(
         response.run_id,
+        user,
         (status) => {
           // Update UI on each poll
           const progress = calculateProgress(status)
@@ -231,8 +245,9 @@ export default function ProjectsPage() {
   }
 
   const handleDeleteProject = async (id: string) => {
+    if (!user) return
     try {
-      await deleteProject(id)
+      await deleteProject(id, user)
       setProjects((prev) => prev.filter((p) => p.id !== id))
       setFilteredProjects((prev) => prev.filter((p) => p.id !== id))
       toast({ title: "Project deleted", description: "The project has been removed." })
