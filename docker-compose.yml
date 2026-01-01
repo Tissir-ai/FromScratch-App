@@ -45,9 +45,6 @@ services:
       dockerfile: Dockerfile
     container_name: fromscratch-auth
     restart: unless-stopped
-    env_file:
-      - .env
-
     environment:
       - NODE_ENV=production
       - PORT=4000
@@ -55,6 +52,16 @@ services:
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
       - JWT_ACCESS_EXPIRES_IN=15m
       - CORS_ORIGIN=https://tissirai.fojas.ai,http://localhost:3106
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REDIRECT_URI=https://tissirai.fojas.ai/api/auth/google/callback
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_REDIRECT_URI=https://tissirai.fojas.ai/api/auth/github/callback
+      - GMAIL_USER=${GMAIL_USER:-}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD:-}
     depends_on:
       auth-db:
         condition: service_healthy
@@ -218,20 +225,19 @@ services:
     networks:
       - fromscratch-network
 
-  # Stripe CLI service for local webhook forwarding (test only)
-  stripe-cli:
-    image: stripe/stripe-cli:latest
-    container_name: fromscratch-stripe-cli
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      # Provide your test secret key in .env as STRIPE_SECRET_KEY
-      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
-    # forward Stripe events to the api service inside this compose network
-    command: ["listen", "--forward-to", "http://auth:4000/api/payments/webhook", "--print-secret"]
-    depends_on:
-      - auth
+  # Stripe CLI service for local webhook forwarding (DISABLED IN PRODUCTION)
+  # Uncomment for local development only
+  # stripe-cli:
+  #   image: stripe/stripe-cli:latest
+  #   container_name: fromscratch-stripe-cli
+  #   restart: unless-stopped
+  #   environment:
+  #     - STRIPE_API_KEY=${STRIPE_SECRET_KEY:-}
+  #   command: ["listen", "--forward-to", "http://auth:4000/api/payments/webhook", "--print-secret"]
+  #   depends_on:
+  #     - auth
+  #   networks:
+  #     - fromscratch-network
 
 networks:
   fromscratch-network:
