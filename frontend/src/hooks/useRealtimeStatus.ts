@@ -44,7 +44,15 @@ export function useRealtimeStatus(projectId: string | undefined, pageId: string 
     // fetch initial users snapshot from server
     (async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+        // In production, use relative path; in dev, use env var or localhost
+        const getBaseUrl = () => {
+          if (process.env.NEXT_PUBLIC_API_BASE_URL) return process.env.NEXT_PUBLIC_API_BASE_URL;
+          if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+            return '';  // Use relative path in production
+          }
+          return 'http://localhost:8000';
+        };
+        const base = getBaseUrl();
         const res = await fetch(`${base}/api/v1/realtime/rooms/${encodeURIComponent(projectId)}/${encodeURIComponent(pageId)}/users`);
         if (res.ok) {
           const j = await res.json();
