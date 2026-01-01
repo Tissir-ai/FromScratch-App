@@ -6,17 +6,28 @@ const MAIN_API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_API_BASE_URL ?? '/api';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+// Module-level user storage for services that can't easily access AuthContext
+let _currentUser: User | null = null;
+
+export function setCurrentUser(user: User | null): void {
+  _currentUser = user;
+}
+
+export function getCurrentUserFromStore(): User | null {
+  return _currentUser;
+}
+
 interface RequestOptions extends RequestInit {
   method?: HttpMethod;
   body?: any;
-  user?: User | null; // Accept user from context
+  user?: User | null; // Accept user from context (takes priority)
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${MAIN_API_BASE_URL}${path}`;
 
-  // User should be passed from the calling component via AuthContext
-  const user = options.user;
+  // User can be passed directly or retrieved from module store
+  const user = options.user ?? _currentUser;
   
   if (!user) {
     throw new Error('Authentication required. Please log in.');
