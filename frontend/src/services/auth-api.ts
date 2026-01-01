@@ -1,6 +1,6 @@
-// In Docker/production, frontend calls nginx at /api/auth which proxies to auth service
+// In Docker/production, frontend calls nginx at /api which proxies to auth service
 // In local dev, it can call auth service directly
-const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? '/api/auth';
+const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? '/api';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
