@@ -1,5 +1,6 @@
 import { mainApi } from './main-api'
 import type { CreateProjectPayload, Project , OverviewData } from '@/types/project.type'
+import type { AuthUser } from '@/types/user.type'
 
 export interface RunStatus {
   run_id: string
@@ -24,30 +25,31 @@ export interface GenerateResponse {
   websocket_url: string
 }
 
-export async function fetchProjects(): Promise<Project[]> {
+export async function fetchProjects(user: AuthUser): Promise<Project[]> {
   // Base URL already includes /api; avoid double /api
-  return mainApi.get<Project[]>('/v1/projects')
+  return mainApi.get<Project[]>('/v1/projects', user)
 }
 
-export async function fetchProjectOverview(id: string): Promise<OverviewData> {
-  return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`)
+export async function fetchProjectOverview(id: string, user: AuthUser): Promise<OverviewData> {
+  return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`, user)
 }
 
-export async function createProject(payload: CreateProjectPayload): Promise<Project> {
-  return mainApi.post<Project>('/v1/projects', payload)
+export async function createProject(payload: CreateProjectPayload, user: AuthUser): Promise<Project> {
+  return mainApi.post<Project>('/v1/projects', payload, user)
 }
 
-export async function generateFromScratchProject(idea: string): Promise<GenerateResponse> {
+export async function generateFromScratchProject(idea: string, user: AuthUser): Promise<GenerateResponse> {
   // Backend route for AI generation endpoint
-  return mainApi.post<GenerateResponse>('/v1/idea/generate', { idea })
+  return mainApi.post<GenerateResponse>('/v1/idea/generate', { idea }, user)
 }
 
-export async function getRunStatus(runId: string): Promise<RunStatus> {
-  return mainApi.get<RunStatus>(`/v1/runs/${runId}`)
+export async function getRunStatus(runId: string, user: AuthUser): Promise<RunStatus> {
+  return mainApi.get<RunStatus>(`/v1/runs/${runId}`, user)
 }
 
 export async function pollRunStatus(
-  runId: string, 
+  runId: string,
+  user: AuthUser, 
   onUpdate?: (status: RunStatus) => void,
   maxAttempts: number = 120, // 10 minutes with 5s intervals
   interval: number = 5000
@@ -57,7 +59,7 @@ export async function pollRunStatus(
   return new Promise((resolve, reject) => {
     const poll = async () => {
       try {
-        const status = await getRunStatus(runId)
+        const status = await getRunStatus(runId, user)
         
         // Call update callback if provided
         if (onUpdate) {
@@ -93,10 +95,10 @@ export async function pollRunStatus(
   })
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  await mainApi.delete<void>(`/v1/projects/${id}`)
+export async function deleteProject(id: string, user: AuthUser): Promise<void> {
+  await mainApi.delete<void>(`/v1/projects/${id}`, user)
 }
 
-export async function fetchProjectOwner(projectId: string): Promise<{ owner: string }> {
-  return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`)
+export async function fetchProjectOwner(projectId: string, user: AuthUser): Promise<{ owner: string }> {
+  return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`, user)
 }
