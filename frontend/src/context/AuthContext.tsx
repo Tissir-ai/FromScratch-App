@@ -19,6 +19,7 @@ import {
   register as registerRequest,
   logout as logoutRequest,
 } from "@/services/auth.service";
+import { setCurrentUser } from "@/services/main-api";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -45,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Sync user to main-api store whenever it changes
+  useEffect(() => {
+    setCurrentUser(user as any);
+  }, [user]);
 
   const refreshUser = useCallback(async () => {
     try {
