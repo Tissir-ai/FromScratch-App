@@ -64,6 +64,37 @@ async def get_members_info(project_id: str) -> List[dict]:
             })
     return members_info
 
+async def search_users_by_project(project_id: str, query: str, limit: int = 10) -> List[dict]:
+    """Search users in a project by name or email."""
+    from app.repositories.users_repo import search_users_by_project as repo_search_users
+
+    users = await repo_search_users(project_id, query, limit)
+    result = []
+
+    for user in users:
+        # Get role information
+        role = await get_role_by_id(user.role_id) if user.role_id else None
+        role_name_lower = (role.name.lower() if role and getattr(role, "name", None) else "")
+        role_perms = getattr(role, "permissions", None)
+
+        if not role or not role_perms:
+            role_label = "guest"
+        elif role_name_lower == "owner":
+            role_label = "owner"
+        else:
+            role_label = "member"
+
+        result.append({
+            "id": str(user.id),
+            "name": user.name,
+            "email": getattr(user, "email", ""),
+            "role": role_label,
+            "team": "--" if role_label in ("guest", "owner") else role_name_lower,
+        })
+
+    return result
+
+
 async def isAllowed(info_id: str, project_id: str,permission: str) -> User | None:
     user = await get_user_by_info_id(info_id)
     if not user:

@@ -1,10 +1,35 @@
 export type Priority = "low" | "medium" | "high" | "critical";
 export type Status = "backlog" | "todo" | "in-progress" | "review" | "done";
 
-export interface UserTaskRef {
+export interface UserRef {
   id: string;
   name: string;
+  email?: string;
 }
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  description?: string;
+  status: Status;
+  priority: Priority;
+  assignee?: UserRef;
+  asign_date?: Date;
+  due_date?: Date;
+  createdAt: string;
+  updatedAt: string;
+  tags?: string[];
+  points?: number;
+}
+
+export type TaskFilters = {
+  query: string;
+  status: Status | "all";
+  priority: Priority | "all";
+  assigneeId?: string;
+  tags?: string[];
+};
+
 export interface TaskUserSelector {
   id: string;
   first_name: string;
@@ -13,22 +38,28 @@ export interface TaskUserSelector {
   role: string;
   team: string;
 }
-export interface TaskItem {
-  id: string;
+
+// DTOs for API communication
+export interface CreateTaskDTO {
   title: string;
   description?: string;
-  status: Status;
-  priority: Priority;
-  assignee?: UserTaskRef;
-  asign_date : Date;
-  due_date  : Date;
-  createdAt: string;
-  updatedAt: string;
+  assignee_id?: string;
+  status?: Status;
+  priority?: Priority;
+  asign_date?: Date;
+  due_date?: Date;
+  tags?: string[];
+  points?: number;
 }
 
-export type TaskFilters = {
-  query: string;
-  status: Status | "all";
-  priority: Priority | "all";
-  assigneeId?: string;
-};
+export interface UpdateTaskDTO {
+  id: string;
+  title?: string;
+  description?: string;
+  assignee_id?: string;
+  status?: Status;
+  priority?: Priority;
+  due_date?: Date;
+  tags?: string[];
+  points?: number;
+}

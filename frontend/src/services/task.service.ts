@@ -1,7 +1,5 @@
 "use client";
 import { mainApi } from './main-api';
-import {getUserById} from './auth.service';
-import type { AuthUser } from '@/types/user.type';
 import type { TaskUserSelector, TaskItem } from '@/types/task.type';
 
 /**
@@ -12,13 +10,18 @@ export async function loadTasksmembers(projectId: string) {
   const data = await mainApi.get<any>(`/v1/projects/${projectId}/members`);
   console.log('[TaskService] Members data received:', data);
   const results : TaskUserSelector[] = [];
+
   for (const member of data) {
-    const userRes : AuthUser = await getUserById(member.info_id);
+    // Parse name into first and last name
+    const nameParts = (member.name || '').split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     results.push({
-      id: member.user_id,
-      first_name: userRes.firstName,
-      last_name: userRes.lastName,
-      email: userRes.email,
+      id: member.info_id, // Use info_id as the user ID for assignee matching
+      first_name: firstName,
+      last_name: lastName,
+      email: member.email || '',
       role: member.role,
       team: member.team,
     });
@@ -74,12 +77,10 @@ export const createTask = async (projectId: string, task: Partial<TaskItem>): Pr
   try {
     console.log('[TaskService] Creating task for project:', projectId, '| Task data:', task);
     const payload = {
-      _id: task.id,
       title: task.title || "New Task",
       description: task.description || "",
       status: task.status || "backlog",
-      priority: task.priority || "medium",
-      assignee_id: task.assignee?.id || "",
+      assignee_id: task.assignee?.id || null,
       asign_date: task.asign_date,
       due_date: task.due_date,
     };
@@ -114,40 +115,34 @@ export const createTask = async (projectId: string, task: Partial<TaskItem>): Pr
  * PUT /api/v1/tasks/{project_id}/{doc_id}
  */
 export const updateTask = async (
-  projectId: string, 
-  docId: string, 
+  projectId: string,
+  docId: string,
   patch: Partial<TaskItem>
 ): Promise<TaskItem> => {
   try {
     console.log('[TaskService] Updating task:', docId, 'in project:', projectId, '| Patch data:', patch);
+
+    // Send complete TaskStructure data as expected by backend
     const payload = {
-      id: docId,
-      title: patch.title,
+      _id: docId,
+      title: patch.title || "Task",
       description: patch.description || "",
-      status: patch.status,
-      priority: patch.priority,
-      assignee_id: patch.assignee?.id || "",
-      user : {
-          email : "ayman@example.com",
-          first_name : "Ayman",
-          last_name : "Hassan"
-      },
-      asign_date: patch.asign_date,
-      due_date: patch.due_date,
-      updated_at: new Date().toISOString(),
-      created_at: patch.createdAt,
+      status: patch.status || "backlog",
+      priority: "medium", // Default priority
+      assignee_id: patch.assignee?.id || null,
+      asign_date: patch.asign_date || null,
+      due_date: patch.due_date || null,
     };
 
     console.log('[TaskService] Payload to send:', payload);
     const updated = await mainApi.put<any>(`/v1/tasks/${projectId}/${docId}`, payload);
     console.log('[TaskService] Task updated successfully:', updated);
-    
+
     return {
       id: updated._id || updated.id,
       title: updated.title,
       description: updated.description || "",
       status: updated.status,
-      priority: updated.priority,
       assignee: updated.assignee_id ? {
         id: updated.assignee_id,
         name: patch.assignee?.name || ""
@@ -155,7 +150,7 @@ export const updateTask = async (
       asign_date: updated.asign_date,
       due_date: updated.due_date,
       createdAt: updated.created_at || new Date().toISOString(),
-      updatedAt: updated.updated_at || new Date().toISOString(),
+      updatedAt: updated.updated_at || new Date().toISOString()
     };
   } catch (error) {
     console.error('Failed to update task:', error);

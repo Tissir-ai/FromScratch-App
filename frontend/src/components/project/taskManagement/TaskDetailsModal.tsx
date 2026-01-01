@@ -1,17 +1,18 @@
 "use client";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { TaskItem, Status, Priority, UserRef, TaskUserSelector } from "./types";
+import { TaskItem, Status, Priority, UserRef } from "./types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Command, CommandInput, CommandItem, CommandEmpty, CommandGroup, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { X, Trash2, Save, UserPlus } from "lucide-react";
+import { getUserById, searchUsers } from "@/services/user.service";
 
 interface TaskDetailsModalProps {
   projectId: string;
@@ -19,25 +20,20 @@ interface TaskDetailsModalProps {
   task: TaskItem | null;
   onClose: () => void;
   onSave: (task: TaskItem) => void;
-  assignees?: TaskUserSelector[];
   onDelete?: (id: string) => void;
 }
 
 const priorities: Priority[] = ["low", "medium", "high", "critical"];
 const statuses: Status[] = ["backlog", "todo", "in-progress", "review", "done"];
 
-export function TaskDetailsModal({ 
-  projectId, 
-  open, 
-  task, 
-  onClose, 
-  onSave, 
-  assignees = [], 
-  onDelete 
-}: TaskDetailsModalProps) {
+export function TaskDetailsModal({ projectId, open, task, onClose, onSave, onDelete }: TaskDetailsModalProps) {
   const [draft, setDraft] = useState<TaskItem | null>(task);
   const [tagInput, setTagInput] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [searchedUsers, setSearchedUsers] = useState<UserRef[]>([] as UserRef[]);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => setDraft(task), [task]);
@@ -46,6 +42,30 @@ export function TaskDetailsModal({
       setTimeout(() => titleRef.current?.focus(), 50);
     }
   }, [open]);
+
+  // Handle user search
+  useEffect(() => {
+    const searchUsersDebounced = async () => {
+      if (!userSearchQuery.trim()) {
+        setSearchedUsers([]);
+        return;
+      }
+
+      try {
+        setUserSearchLoading(true);
+        const users = await searchUsers(userSearchQuery, projectId);
+        setSearchedUsers(users);
+      } catch (error) {
+        console.error('Failed to search users:', error);
+        setSearchedUsers([]);
+      } finally {
+        setUserSearchLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchUsersDebounced, 300);
+    return () => clearTimeout(timeoutId);
+  }, [userSearchQuery, projectId]);
 
   if (!draft) return null;
 
@@ -94,7 +114,7 @@ export function TaskDetailsModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o)=> { if(!o) onClose(); }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="sm:max-w-3xl" onKeyDown={handleKeyDown}>
         <DialogHeader className="space-y-1">
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -109,13 +129,13 @@ export function TaskDetailsModal({
             {/* Title */}
             <div className="space-y-1">
               <label className="text-xs font-medium">Title</label>
-              <Input ref={titleRef} value={draft.title} onChange={e=>update("title", e.target.value)} placeholder="Concise summary" />
+              <Input ref={titleRef} value={draft.title} onChange={e => update("title", e.target.value)} placeholder="Concise summary" />
             </div>
                       {/* Meta Grid */}
             <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium">Status</label>
-                <Select value={draft.status} onValueChange={val=>update("status", val as Status)}>
+                <Select value={draft.status} onValueChange={val => update("status", val as Status)}>
                   <SelectTrigger className="h-8 text-xs" aria-label="Status"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -124,7 +144,7 @@ export function TaskDetailsModal({
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">Priority</label>
-                <Select value={draft.priority} onValueChange={val=>update("priority", val as Priority)}>
+                <Select value={draft.priority} onValueChange={val => update("priority", val as Priority)}>
                   <SelectTrigger className="h-8 text-xs" aria-label="Priority"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -133,39 +153,101 @@ export function TaskDetailsModal({
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">Assignee</label>
-                <Command className="border rounded bg-background">
-                  <CommandInput placeholder="Search user" className="text-xs" />
-                  <CommandList>
-                    <CommandEmpty>No matches</CommandEmpty>
-                    <CommandGroup heading="Team Members">
-                      {assignees.map(a => (
-                        <CommandItem
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between h-8 text-xs"
+                      onClick={() => {
+                        if (!userSearchOpen) {
+                          setUserSearchOpen(true);
+                          setUserSearchQuery("");
+                          setSearchedUsers([]);
+                        }
+                      }}
+                    >
+                      {draft.assignee ? draft.assignee.name : "Search user by email or name"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search user by email or name"
+                        className="text-xs h-8"
+                        value={userSearchQuery}
+                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <ScrollArea className="h-48">
+                      {userSearchLoading ? (
+                        <div className="p-2 text-sm text-muted-foreground">Searching...</div>
+                      ) : userSearchQuery && searchedUsers.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground">No users found</div>
+                      ) : userSearchQuery && searchedUsers.length > 0 ? (
+                        <div className="border-t">
+                          {searchedUsers.map(a => {
+                            return (
+                              <Button
                           key={a.id}
-                          onSelect={() => update("assignee", {
-                            id: a.id,
-                            name: `${a.first_name} ${a.last_name}`.trim()
+                                variant="ghost"
+                                className={cn("w-full justify-start text-xs p-2 h-auto", draft.assignee?.id === a.id && "bg-primary/10")}
+                                onClick={() => {
+                                  update("assignee", a);
+                                  setUserSearchQuery("");
+                                  setSearchedUsers([]);
+                                  setUserSearchOpen(false);
+                                }}
+                              >
+                                <div className="flex flex-col items-start">
+                                  <span>{a.name}</span>
+                                  {a.email && <span className="text-[10px] text-muted-foreground">{a.email}</span>}
+                                </div>
+                              </Button>
+                            );
                           })}
-                          className={cn("text-xs", draft.assignee?.id === a.id && "bg-primary/10")}
-                        >
-                          {a.first_name} {a.last_name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
+                        </div>
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground">Start typing to search users</div>
+                      )}
+                      {draft.assignee && (
+                        <div className="border-t mt-2">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-xs text-muted-foreground p-2 h-auto"
+                            onClick={() => {
+                              update("assignee", undefined);
+                              setUserSearchOpen(false);
+                            }}
+                          >
+                            <span className="flex items-center gap-1">
+                              <UserPlus className="h-3 w-3" />
+                              Unassign
+                            </span>
+                          </Button>
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
                 <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                  {draft.assignee ? `Assigned to ${draft.assignee.name}` : <span className="flex items-center gap-1"><UserPlus className="h-3 w-3" /> Unassigned</span>}
+                  {draft.assignee ? (
+                    <span>Assigned to {draft.assignee.name}{draft.assignee.email && ` (${draft.assignee.email})`}</span>
+                  ) : (
+                    <span className="flex items-center gap-1"><UserPlus className="h-3 w-3" /> Unassigned</span>
+                  )}
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">Story Points</label>
-                <Input type="number" className="h-8 text-xs" value={draft.points ?? ''} onChange={e=>update("points", e.target.value? Number(e.target.value): undefined)} placeholder="e.g. 3" />
+                <Input type="number" className="h-8 text-xs" value={draft.points ?? ''} onChange={e => update("points", e.target.value ? Number(e.target.value) : undefined)} placeholder="e.g. 3" />
               </div>
             </div>
             {/* Description */}
             <div className="space-y-1">
               <label className="text-xs font-medium flex justify-between"><span>Description</span><span className="text-[10px] text-muted-foreground">Markdown supported soon</span></label>
-              <Textarea value={draft.description || ""} onChange={e=>update("description", e.target.value)} rows={6} placeholder="Context, acceptance criteria, links…" />
+              <Textarea value={draft.description || ""} onChange={e => update("description", e.target.value)} rows={6} placeholder="Context, acceptance criteria, links…" />
             </div>
             {/* Tags */}
             <div className="space-y-1">
@@ -174,7 +256,7 @@ export function TaskDetailsModal({
                 {(draft.tags || []).map(t => (
                   <Badge key={t} variant="secondary" className="text-[10px] flex items-center gap-1">
                     <span>{t}</span>
-                    <button type="button" aria-label={`Remove ${t}`} onClick={()=>removeTag(t)} className="rounded hover:bg-muted p-0.5">
+                    <button type="button" aria-label={`Remove ${t}`} onClick={() => removeTag(t)} className="rounded hover:bg-muted p-0.5">
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -187,8 +269,8 @@ export function TaskDetailsModal({
                 <Input
                   placeholder="Add tag"
                   value={tagInput}
-                  onChange={e=>setTagInput(e.target.value)}
-                  onKeyDown={e=> { if(e.key==='Enter'){ e.preventDefault(); addTag(); } }}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
                   className="h-8 text-xs"
                 />
                 <Button type="button" variant="outline" size="sm" onClick={addTag} className="h-8 text-xs">Add</Button>
@@ -206,12 +288,12 @@ export function TaskDetailsModal({
         </ScrollArea>
         <div className="flex justify-end gap-2 pt-2 border-t mt-2">
           {onDelete && (
-            <Button variant="destructive" size="sm" onClick={()=>setDeleteOpen(true)} className="gap-1">
+            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)} className="gap-1">
               <Trash2 className="h-3 w-3" /> Delete
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={()=> { if(draft) onSave(draft); onClose(); }} className="gap-1">
+          <Button size="sm" onClick={() => { if (draft) onSave(draft); onClose(); }} className="gap-1">
             <Save className="h-3 w-3" /> Save
           </Button>
         </div>
@@ -241,4 +323,3 @@ export function TaskDetailsModal({
     </Dialog>
   );
 }
-

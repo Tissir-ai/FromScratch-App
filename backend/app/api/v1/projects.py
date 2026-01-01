@@ -83,6 +83,30 @@ async def get_user_role_in_project(project_id: str, info_id: str, current_user: 
     print("User permissions:", user_permissions)
     return user_permissions
 
+@router.get("/{project_id}/users/search")
+async def search_project_users(project_id: str, q: str = "", limit: int = 10, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
+    """Search users in the project by name or email."""
+    print(f"User search request: user_id={current_user.get('id')}, project_id={project_id}, query='{q}'")
+
+    project = await get_by_id(project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+
+    permission_check = await isAllowed(current_user.get("id"), project_id, "view_overview")
+    print(f"Permission check result: {permission_check}")
+
+    if not permission_check:
+        print("Permission denied for user search")
+        raise HTTPException(403, "Not enough permissions")
+
+    if not q or len(q.strip()) < 1:
+        return []
+
+    from app.services.user_service import search_users_by_project
+    result = await search_users_by_project(project_id, q.strip(), limit)
+    print(f"User search result: {len(result)} users found")
+    return result
+
 @router.post("/{project_id}/user/invite")
 async def invite_user_to_project(project_id: str, payload: UserIn, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
     """Get an overview of the project including counts of related entities."""
