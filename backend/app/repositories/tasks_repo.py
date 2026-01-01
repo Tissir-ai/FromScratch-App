@@ -7,51 +7,67 @@ from datetime import datetime
 async def create_task(task: Task) -> Task:
     return await task.insert()
 
-async def get_task_Container_by_project(project_id: str | PydanticObjectId) -> Task | None:
+
+async def get_task_Container_by_project(
+    project_id: str | PydanticObjectId,
+) -> Task | None:
     try:
-        pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        pid = (
+            PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        )
     except Exception:
         print("Invalid project id:", project_id)
         return None
     task = await Task.find_one(Task.project_id == pid)
     return task
 
-async def get_tasks_by_project(project_id: str| PydanticObjectId) -> List[TaskStructure]:
-        try:
-            pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
-        except Exception:
-            print("Invalid project id:", project_id)
-            return []
-        task = await Task.find_one(Task.project_id == pid)
-        if not task:
-            return []
 
-        def _key(item: TaskStructure):
-            updated = getattr(item, "updated_at", None)
-            created = getattr(item, "created_at", None)
-            # normalize None to a very old datetime so sorting works
-            if updated is None:
-                updated = created or datetime.min
-            if created is None:
-                created = updated or datetime.min
-            return (updated, created)
-        return sorted(list(task.data), key=_key, reverse=True) 
+async def get_tasks_by_project(
+    project_id: str | PydanticObjectId,
+) -> List[TaskStructure]:
+    try:
+        pid = (
+            PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        )
+    except Exception:
+        print("Invalid project id:", project_id)
+        return []
+    task = await Task.find_one(Task.project_id == pid)
+    if not task:
+        return []
+
+    def _key(item: TaskStructure):
+        updated = getattr(item, "updated_at", None)
+        created = getattr(item, "created_at", None)
+        # normalize None to a very old datetime so sorting works
+        if updated is None:
+            updated = created or datetime.min
+        if created is None:
+            created = updated or datetime.min
+        return (updated, created)
+
+    return sorted(list(task.data), key=_key, reverse=True)
+
 
 async def get_today_tasks(project_id: str) -> List[TaskStructure]:
+    # Return all tasks for the overview page - it will show the first 3
+    # This fixes the issue where overview shows "No tasks for today" even when there are tasks
     tasks = await get_tasks_by_project(project_id)
-    # Filter tasks for today
-    from datetime import datetime
-    today = datetime.utcnow().date()
-    today_tasks = [task for task in tasks if task.due_date and datetime.fromisoformat(task.due_date).date() == today or task.asign_date and datetime.fromisoformat(task.asign_date).date() == today]
-    return today_tasks
+    return tasks
+
 
 async def get_task_by_id(doc_id: str) -> Task | None:
     return await Task.get(doc_id)
-    
-async def get_task_item_by_id(project_id: str | PydanticObjectId, item_id: str) -> TaskStructure | None:
+
+
+async def get_task_item_by_id(
+    project_id: str | PydanticObjectId, item_id: str
+) -> TaskStructure | None:
     """Get an item inside the project's Task document by its item id."""
     try:
-        pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        pid = (
+            PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        )
     except Exception:
         print("Invalid project id:", project_id)
         return None
@@ -63,10 +79,15 @@ async def get_task_item_by_id(project_id: str | PydanticObjectId, item_id: str) 
             return item
     return None
 
-async def update_task_item(project_id: str | PydanticObjectId, data: TaskStructure) -> TaskStructure | None:
+
+async def update_task_item(
+    project_id: str | PydanticObjectId, data: TaskStructure
+) -> TaskStructure | None:
     """Update an item inside the project's Diagram document and persist it."""
     try:
-        pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        pid = (
+            PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        )
     except Exception:
         print("Invalid project id:", project_id)
         return None
@@ -87,10 +108,15 @@ async def delete_task(doc_id: str) -> Task | None:
         await doc.delete()
     return doc
 
-async def remove_task_item(project_id: str | PydanticObjectId, doc_id: str) -> TaskStructure | None:
+
+async def remove_task_item(
+    project_id: str | PydanticObjectId, doc_id: str
+) -> TaskStructure | None:
     """Remove an item inside the project's Task document and persist it."""
     try:
-        pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        pid = (
+            PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        )
     except Exception:
         print("Invalid project id:", project_id)
         return None

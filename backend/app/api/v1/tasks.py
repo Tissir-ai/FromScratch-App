@@ -36,8 +36,7 @@ async def list_tasks(project_id: str, current_user: object = Depends(get_current
     return await list_by_project(project_id)
 
 @router.put("/{project_id}/{doc_id}", response_model=TaskStructure)
-# input : {id, title, description, assignee_id, due_date, status , user{email, first_name, last_name}}
-async def update_task(project_id: str, doc_id: str, payload: object, current_user: object = Depends(get_current_user), _=Depends(get_db)):
+async def update_task(project_id: str, doc_id: str, payload: TaskStructure, current_user: object = Depends(get_current_user), _=Depends(get_db)):
     project = await get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
