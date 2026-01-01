@@ -194,7 +194,7 @@ export default function SubscriptionPage() {
                                 Print receipt
                               </button>
 
-                              <button onClick={() => router.push('/projects')} className="px-4 py-2 rounded border">
+                              <button onClick={() => { window.location.href = '/projects'; }} className="px-4 py-2 rounded border">
                                 Go to projects
                               </button>
                             </div>
