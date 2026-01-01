@@ -194,10 +194,10 @@ export default function SubscriptionPage() {
                                 Print receipt
                               </button>
 
-                              <Link href="/projects" className="px-4 py-2 rounded border">
-                                   Go to projects
-                              </Link>
-                              </div>
+                              <button onClick={() => { window.location.href = '/projects'; }} className="px-4 py-2 rounded border">
+                                Go to projects
+                              </button>
+                            </div>
 
                             <div className="text-sm text-muted-foreground">
                               <p>Need help? <a href="/contact" className="text-primary underline">Contact support</a></p>
