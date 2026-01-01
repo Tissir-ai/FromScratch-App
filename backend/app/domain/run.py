@@ -10,7 +10,7 @@ class RunDomain(Document):
     Remplace le modèle SQL Run pour compatibilité MongoDB.
     """
     id: UUID = Field(default_factory=uuid4)
-    project_id: UUID
+    project_id: str  # store project ObjectId/UUID as string to align with caller payloads
     status: str = "queued"  # queued | running | succeeded | failed
     
     # État du pipeline avec contenu JSON

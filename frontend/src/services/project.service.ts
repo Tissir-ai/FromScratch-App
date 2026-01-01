@@ -42,9 +42,23 @@ export async function createProject(payload: CreateProjectPayload): Promise<Proj
   return mainApi.post<Project>('/v1/projects', payload)
 }
 
-export async function generateFromScratchProject(idea: string): Promise<GenerateResponse> {
-  // Backend route for AI generation endpoint
-  return mainApi.post<GenerateResponse>('/v1/idea/generate', { idea })
+export interface GenerateFromScratchParams {
+  idea: string
+  projectId?: string
+  webhookUrl?: string
+}
+
+export async function generateFromScratchProject({
+  idea,
+  projectId,
+  webhookUrl,
+}: GenerateFromScratchParams): Promise<GenerateResponse> {
+  // Backend route for AI generation endpoint (auto-creates project when projectId is omitted)
+  return mainApi.post<GenerateResponse>('/v1/idea/generate', {
+    idea,
+    ...(projectId ? { project_id: projectId } : {}),
+    ...(webhookUrl ? { webhook_url: webhookUrl } : {}),
+  })
 }
 
 export async function getRunStatus(runId: string): Promise<RunStatus> {

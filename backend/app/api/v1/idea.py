@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel
 from rq import Queue
 from typing import Optional
@@ -8,16 +9,18 @@ from app.repositories import runs_repo
 from app.core.events import get_redis
 from app.jobs.blueprint_job import run_blueprint_job
 from app.domain.project import Project
-from app.services.project_service import create, update
+from app.services.project_service import create, update , create_project_with_roles
 
 # services to create placeholder documents
-from app.domain.task import TaskDomain
-from app.domain.diagram import DiagramDomain
-from app.domain.requirement import RequirementDomain
+from app.domain.task import TaskStructure
+from app.domain.diagram import DiagramStructure
+from app.domain.requirement import RequirementStructure
 from app.services.task_service import create as create_task
 from app.services.diagram_service import create as create_diagram
 from app.services.requirement_service import create as create_requirement
 import asyncio
+from app.api.deps import get_db, get_current_user
+
 
 router = APIRouter(prefix="/v1/idea", tags=["idea"])
 
@@ -29,26 +32,39 @@ class IdeaIn(BaseModel):
 
 
 @router.post("/generate")
-async def generate_blueprint(payload: IdeaIn):
+async def generate_blueprint(payload: IdeaIn, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
     # 🆕 Auto-create project if project_id not provided
     if payload.project_id is None:
         print("[IDEA_API] No project_id provided. Creating temporary project...")
         temp_project = Project(
             name="Generating...",  # Temporary name - will be updated by metadata agent
             description="Project being generated from idea. Name will be updated shortly.",
-            tasks_id=None,
-            diagrams_id=None,
-            requirements_id=None,
-            logs_id=None,
+            created_by=current_user.get("id")
         )
-        created_project = await create(temp_project)
+        created_project = await create_project_with_roles(temp_project, current_user)
         project_id = created_project.id
         print(f"[IDEA_API] Created temporary project: {project_id}")
         # Create placeholder documents (tasks, diagrams, requirements) in parallel
         try:
-            task_payload = TaskDomain(project_id=project_id)
-            diagram_payload = DiagramDomain(project_id=project_id)
-            requirement_payload = RequirementDomain(project_id=project_id)
+            task_payload = TaskStructure(
+                title="Generating tasks",
+                description="Placeholder while the blueprint is prepared",
+                assignee_id=None,
+                status="backlog",
+                priority="medium",
+            )
+            diagram_payload = DiagramStructure(
+                title="Generating diagrams",
+                type="flowchart",
+                nodes=[],
+                edges=[],
+            )
+            requirement_payload = RequirementStructure(
+                title="Generating requirements",
+                category="auto",
+                description="Placeholder while the blueprint is prepared",
+                content=None,
+            )
 
             tasks_coro = create_task(project_id, task_payload)
             diagrams_coro = create_diagram(project_id, diagram_payload)

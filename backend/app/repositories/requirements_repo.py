@@ -61,6 +61,19 @@ async def update_requirement(project_id: str | PydanticObjectId, data: Requireme
     return None
 
 
+async def delete_all_requirements(project_id: str | PydanticObjectId) -> bool:
+    """Delete all requirements for a given project."""
+    try:
+        pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+    except Exception:
+        print("Invalid project id:", project_id)
+        return False
+    doc = await Requirement.find_one(Requirement.project_id == pid)
+    if not doc:
+        return False
+    await doc.delete()
+    return True
+
 async def delete_requirement(project_id: str | PydanticObjectId, doc_id: str) -> RequirementStructure | None:
     """Remove an item inside the project's Diagram document and persist it."""
     try:

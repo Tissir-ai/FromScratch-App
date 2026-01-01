@@ -173,12 +173,12 @@ export default function ProjectsPage() {
     try {
       // Start generation
       updateGenerationStep('init', 'in-progress')
-      const response = await generateFromScratchProject(idea)
+      const response = await generateFromScratchProject({ idea })
       updateGenerationStep('init', 'completed')
       setGenerationProgress(10)
       
       // Poll for status
-      const finalStatus = await pollRunStatus(
+      await pollRunStatus(
         response.run_id,
         (status) => {
           // Update UI on each poll
@@ -198,7 +198,7 @@ export default function ProjectsPage() {
         toast({ title: "Success", description: "Project generated successfully" })
         loadProjects().then(() => {
           // Navigate to the new project
-          router.push(`/projects/${response.project_id}`)
+          router.push(`/projects/${response.project_id}/overview`)
         })
       }, 1500)
       
@@ -344,34 +344,6 @@ export default function ProjectsPage() {
         {/* Content */}
         {content()}
       </div>
-
-      {/* Details Panel */}
-      <ProjectDetailsPanel
-        project={selectedProject}
-        isOwner={isOwner}
-        open={detailsPanelOpen}
-        onOpenChange={setDetailsPanelOpen}
-      />
-      
-      {/* Generation Modal */}
-      <ProjectGenerationModal
-        open={generationOpen}
-        idea={generationIdea}
-        steps={generationSteps}
-        progress={generationProgress}
-        error={generationError}
-        onCancel={() => {
-          if (!generationError) {
-            toast({ 
-              title: "Generation in progress", 
-              description: "Please wait for the generation to complete",
-              variant: "default" 
-            })
-          } else {
-            setGenerationOpen(false)
-          }
-        }}
-      />
 
       {/* Details Panel */}
       <ProjectDetailsPanel

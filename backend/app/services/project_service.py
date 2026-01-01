@@ -19,7 +19,7 @@ from app.repositories.projects_repo import (
 )
 from app.repositories.diagrams_repo import create_diagram , delete_diagram
 from app.repositories.tasks_repo import create_task , delete_task , get_today_tasks
-from app.repositories.requirements_repo import create_requirement , delete_requirement
+from app.repositories.requirements_repo import create_requirement ,  delete_all_requirements
 from app.repositories.logs_repo import create_log, delete_log 
 from app.repositories.chat_repo import create_chat , delete_chat
 from app.services.role_service import delete_role , get_roles_by_project
@@ -122,15 +122,15 @@ async def update(project_id: str, data: dict) -> Project | None:
 
 
 async def delete(project: Project) -> Project | None:
-    if project.chats_id:
+    if project.chats_id is not None:
         await delete_chat(project.chats_id) 
-    if project.logs_id:
+    if project.logs_id is not None:
         await delete_log(project.logs_id)
-    if project.requirements_id:
-        await delete_requirement(project.requirements_id)
-    if project.tasks_id:
+    if project.requirements_id is not None:
+        await delete_all_requirements(project.requirements_id)
+    if project.tasks_id is not None:
         await delete_task(project.tasks_id)
-    if project.diagrams_id:
+    if project.diagrams_id is not None:
         await delete_diagram(project.diagrams_id)
     # Delete all users associated with the project
     users = await get_users_by_project(project.id)
