@@ -33,6 +33,11 @@ export async function fetchProjectOverview(id: string): Promise<OverviewData> {
   return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`)
 }
 
+export async function fetchMemberPermissions(projectId: string, infoId: string): Promise<string[]> {
+  return mainApi.get<string[]>(`/v1/projects/${projectId}/user/${infoId}/permissions`)
+}
+
+
 export async function createProject(payload: CreateProjectPayload): Promise<Project> {
   return mainApi.post<Project>('/v1/projects', payload)
 }

@@ -56,12 +56,12 @@ interface DashboardLayoutProps {
   projectId: string;
 }
 
-const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
+// Inner component that assumes it is wrapped by ProjectProvider (so useProject is safe).
+const PageLayoutInner = ({ children, title, projectId, user, logout }: DashboardLayoutProps & { user: any; logout: () => Promise<void> | void }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
@@ -150,6 +150,53 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
     };
   }, [projectId, pageRoomId, user?.id]);
 
+  const projectCtx = useProject();
+    const navItems = [
+      { icon: LayoutDashboard, label: "Dashboard", path: `/projects/${projectId}` , requiredPermission: 'view_dashboard'},
+      { icon: Target, label: "Overview", path: `/projects/${projectId}/overview`, requiredPermission: 'view_overview' },
+      { icon: GitBranch, label: "Diagrams", path: `/projects/${projectId}/diagrams`, requiredPermission: 'view_diagrams' },
+      { icon: FileText, label: "Requirements", path: `/projects/${projectId}/requirements` , requiredPermission: 'view_requirements'},
+      { icon: CheckSquare, label: "Tasks & Sprints", path: `/projects/${projectId}/tasks` , requiredPermission: 'view_tasks'},
+      { icon: BarChart3, label: "Reports", path: `/projects/${projectId}/reports`, requiredPermission: 'view_reports' },
+      { icon: History, label: "System Logs", path: `/projects/${projectId}/logs` , requiredPermission: 'view_logs' },
+      { icon: Settings, label: "Settings", path: `/projects/${projectId}/settings` , requiredPermission: 'manage_project' },
+    ];
+
+    // Only render links the user can access
+    const allowedNavItems = useMemo(() => {
+      if (!projectCtx?.hasPermission) return navItems;
+      return navItems.filter((item) => !item.requiredPermission || projectCtx.hasPermission(item.requiredPermission));
+    }, [navItems, projectCtx?.hasPermission]);
+
+    // Map current page to required permission
+    const pageRequiredPermission = useMemo(() => {
+      switch (pageSlug) {
+        case 'overview':
+          return 'view_overview';
+        case 'diagrams':
+          return 'view_diagrams';
+        case 'requirements':
+          return 'view_requirements';
+        case 'tasks':
+        case 'tasks&sprints':
+          return 'view_tasks';
+        case 'reports':
+          return 'view_reports';
+        case 'logs':
+          return 'view_logs';
+        case 'settings':
+          return 'manage_project';
+        case 'dashboard':
+        default:
+          return 'view_dashboard';
+      }
+    }, [pageSlug]);
+
+    const canAccessPage = useMemo(() => {
+      if (!projectCtx?.hasPermission) return true; // fallback if context missing
+      return projectCtx.hasPermission(pageRequiredPermission);
+    }, [projectCtx?.hasPermission, pageRequiredPermission]);
+  
   const sendCursor = (x: number, y: number) => {
     const ws = socketRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -191,16 +238,7 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
     }
   }, [logout, router, toast]);
 
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: `/projects/${projectId}` },
-    { icon: Target, label: "Overview", path: `/projects/${projectId}/overview` },
-    { icon: GitBranch, label: "Diagrams", path: `/projects/${projectId}/diagrams` },
-    { icon: FileText, label: "Requirements", path: `/projects/${projectId}/requirements` },
-    { icon: CheckSquare, label: "Tasks & Sprints", path: `/projects/${projectId}/tasks` },
-    { icon: BarChart3, label: "Reports", path: `/projects/${projectId}/reports` },
-    { icon: History, label: "System Logs", path: `/projects/${projectId}/logs` },
-    { icon: Settings, label: "Settings", path: `/projects/${projectId}/settings` },
-  ];
+ 
 
   const isActive = (path: string) => pathname === path;
 
@@ -211,9 +249,29 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
     sendCursor,
   };
 
+  // While permissions are loading, show a lightweight full-screen loader to avoid flashing unauthorized content
+  if (projectCtx?.loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
+        Loading project…
+      </div>
+    );
+  }
+
+  // If the user lacks permission for this page, show an access denied screen
+  if (!canAccessPage) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-center px-6">
+        <div className="text-2xl font-semibold mb-2">Access denied</div>
+        <p className="text-muted-foreground max-w-md">You are not authorized to view this page. Please contact the project owner to update your permissions.</p>
+      </div>
+    );
+  }
+
   // Render export button only from inside the ProjectProvider so `useProject` has a provider above it
   const OwnerExportButton: React.FC = () => {
-    const ownerPlanLocal = useProject();
+    const pctx = useProject();
+    const ownerPlanLocal = pctx?.ownerPlan;
     if (!ownerPlanLocal?.config?.githubExport) return null;
     return (
       <Button variant="outline" size="sm" onClick={handleExport} className="gap-2 hidden sm:flex">
@@ -225,7 +283,6 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
 
   return (
     <RealtimeProvider value={realtimeValue}>
-      <ProjectProvider projectId={projectId}>
       <div className="min-h-screen flex w-full bg-background">
       {/* Sidebar (absolute on mobile, fixed on md+) */}
       <aside
@@ -269,8 +326,31 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
         <ScrollArea className="flex-1 py-10">
           <nav className="grid gap-1 px-2">
             <TooltipProvider delayDuration={0}>
-              {navItems.map((item) => {
+              {allowedNavItems.map((item) => {
                 const active = isActive(item.path);
+                const isAllowed = !item.requiredPermission || projectCtx?.hasPermission(item.requiredPermission || '') === true;
+                // If there's a required permission and the user lacks it, show a disabled entry with a tooltip
+                if (!isAllowed) {
+                  return (
+                    <Tooltip key={item.path}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={cn(
+                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-muted-foreground cursor-not-allowed",
+                            !isSidebarOpen && "justify-center px-2"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          {isSidebarOpen && <span>{item.label}</span>}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Not authorized</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
                 return (
                   <Tooltip key={item.path}>
                     <TooltipTrigger asChild>
@@ -395,15 +475,6 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
             <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className="rounded-full shadow-lg shadow-primary/20"
-            >
-              <MessageSquare className="h-5 w-5" />
-            </Button>
           </div>
         </header>
 
@@ -423,12 +494,25 @@ const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
 
       {/* Team Modal */}
       <TeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
-
-      {/* Chat Panel */}
-      <ChatPanel open={isChatOpen} onOpenChange={setIsChatOpen} />
     </div>
-    </ProjectProvider>
     </RealtimeProvider>
+  );
+};
+
+const PageLayout = ({ children, title, projectId }: DashboardLayoutProps) => {
+  const { user, logout } = useAuth();
+
+  return (
+    <ProjectProvider projectId={projectId} memberId={user?.id ?? ''}>
+      <PageLayoutInner
+        projectId={projectId}
+        title={title}
+        user={user}
+        logout={logout}
+      >
+        {children}
+      </PageLayoutInner>
+    </ProjectProvider>
   );
 };
 
@@ -469,10 +553,12 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ projectId, isSidebarO
       <DropdownMenuContent align="end" className={`w-56 ${!isSidebarOpen && "ml-4"}`} side={isSidebarOpen ? "top" : "right"}>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push(`/projects/${projectId}/profile`)}>
+        <DropdownMenuItem onClick={() => router.push(`/profil`)}>
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/profil?tab=subscription`)}>
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
           <LogOut className="mr-2 h-4 w-4" />

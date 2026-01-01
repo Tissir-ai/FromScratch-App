@@ -37,14 +37,14 @@ async def list_tasks(project_id: str, current_user: object = Depends(get_current
 
 @router.put("/{project_id}/{doc_id}", response_model=TaskStructure)
 # input : {id, title, description, assignee_id, due_date, status , user{email, first_name, last_name}}
-async def update_task(project_id: str, doc_id: str, payload: object, current_user: User = Depends(get_current_user), _=Depends(get_db)):
+async def update_task(project_id: str, doc_id: str, payload: object, current_user: object = Depends(get_current_user), _=Depends(get_db)):
     project = await get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
     if not await isAllowed(current_user.get("id"), project_id, "edit_tasks"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-
+    print("API received update payload:", payload)
     updated = await update(project_id,payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -52,7 +52,7 @@ async def update_task(project_id: str, doc_id: str, payload: object, current_use
     return updated
 
 @router.delete("/{project_id}/{doc_id}")
-async def delete_task(project_id: str, doc_id: str, current_user: User = Depends(get_current_user), _=Depends(get_db)):
+async def delete_task(project_id: str, doc_id: str, current_user: object = Depends(get_current_user), _=Depends(get_db)):
     project = await get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { TaskItem, Status, Priority, UserRef } from "./types";
+import { TaskItem, Status, Priority, UserRef, TaskUserSelector } from "./types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,18 +14,27 @@ import { cn } from "@/lib/utils";
 import { X, Trash2, Save, UserPlus } from "lucide-react";
 
 interface TaskDetailsModalProps {
+  projectId: string;
   open: boolean;
   task: TaskItem | null;
   onClose: () => void;
   onSave: (task: TaskItem) => void;
-  assignees?: UserRef[];
+  assignees?: TaskUserSelector[];
   onDelete?: (id: string) => void;
 }
 
 const priorities: Priority[] = ["low", "medium", "high", "critical"];
 const statuses: Status[] = ["backlog", "todo", "in-progress", "review", "done"];
 
-export function TaskDetailsModal({ open, task, onClose, onSave, assignees = [], onDelete }: TaskDetailsModalProps) {
+export function TaskDetailsModal({ 
+  projectId, 
+  open, 
+  task, 
+  onClose, 
+  onSave, 
+  assignees = [], 
+  onDelete 
+}: TaskDetailsModalProps) {
   const [draft, setDraft] = useState<TaskItem | null>(task);
   const [tagInput, setTagInput] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -128,21 +137,24 @@ export function TaskDetailsModal({ open, task, onClose, onSave, assignees = [], 
                   <CommandInput placeholder="Search user" className="text-xs" />
                   <CommandList>
                     <CommandEmpty>No matches</CommandEmpty>
-                    <CommandGroup heading="People">
+                    <CommandGroup heading="Team Members">
                       {assignees.map(a => (
                         <CommandItem
                           key={a.id}
-                          onSelect={() => update("assignee", a)}
-                          className={cn("text-xs", draft.assignee?.id===a.id && "bg-primary/10")}
+                          onSelect={() => update("assignee", {
+                            id: a.id,
+                            name: `${a.first_name} ${a.last_name}`.trim()
+                          })}
+                          className={cn("text-xs", draft.assignee?.id === a.id && "bg-primary/10")}
                         >
-                          {a.name}
+                          {a.first_name} {a.last_name}
                         </CommandItem>
                       ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
                 <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                  {draft.assignee ? `Assigned to ${draft.assignee.name}` : <span className="flex items-center gap-1"><UserPlus className="h-3 w-3"/> Unassigned</span>}
+                  {draft.assignee ? `Assigned to ${draft.assignee.name}` : <span className="flex items-center gap-1"><UserPlus className="h-3 w-3" /> Unassigned</span>}
                 </div>
               </div>
               <div className="space-y-1">
@@ -229,3 +241,4 @@ export function TaskDetailsModal({ open, task, onClose, onSave, assignees = [], 
     </Dialog>
   );
 }
+

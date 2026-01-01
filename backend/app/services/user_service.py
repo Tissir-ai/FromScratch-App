@@ -101,3 +101,15 @@ async def assign_role(Project_id: str, payload: object) -> User | None:
     if not role:
         return None
     return await set_role(user.id, role.id)
+
+async def get_user_permission_by_info_id(project_id: str, info_id: str) -> dict | None:
+    user = await get_user_by_info_id(info_id)
+    if not user:
+        return None
+    if str(user.project_id) != str(project_id):
+        return None
+    role = await get_role_by_id(user.role_id)
+    if not role:
+        return None
+    print("User role permissions:", role.permissions)
+    return role.permissions

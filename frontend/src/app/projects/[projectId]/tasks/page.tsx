@@ -11,7 +11,7 @@ export default function TasksPage({ params }: TasksPageProps) {
   return (
     <PageLayout title="Tasks" projectId={projectId}>
       <div className="p-6">
-        <TaskBoard />
+        <TaskBoard projectId={projectId} />
       </div>
     </PageLayout>
   );

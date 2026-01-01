@@ -39,7 +39,7 @@ export default function HomePage() {
           <Testimonials />
  ) : null}
         <section id="pricing" className="bg-feature-background">
-            {subscription === null || subscription?.status != 'active' ? ( 
+            {subscription == null || subscription?.status != 'active' ? ( 
               <>
               <Pricing />
         <div className="max-w-7xl mx-auto pb-10 text-center ">

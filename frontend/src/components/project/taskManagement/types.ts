@@ -1,8 +1,14 @@
-import { Priority, Status, TaskItem, UserRef, TaskFilters } from "@/types/task.type";
+import { Priority, Status, TaskItem, TaskUserSelector, TaskFilters } from "@/types/task.type";
 
-export type { Priority, Status, TaskItem, UserRef, TaskFilters };
+export type { Priority, Status, TaskItem, TaskUserSelector, TaskFilters };
 
-export interface Column { id: Status; title: string; }
+// For backward compatibility with component usage
+export type UserRef = TaskUserSelector;
+
+export interface Column { 
+  id: Status; 
+  title: string; 
+}
 
 export const COLUMNS: Column[] = [
   { id: "backlog", title: "Backlog" },

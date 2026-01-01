@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.api.deps import get_db, get_current_user
 from app.services.project_service import create_project_with_roles, list_for_user, get_by_id, delete as delete_project, load_overview
-from app.services.user_service import isAllowed, invite_user , remove as delete_user, assign_role , get_members_info
+from app.services.user_service import isAllowed, invite_user , remove as delete_user, assign_role , get_members_info , get_user_permission_by_info_id
 router = APIRouter(prefix="/v1/projects", tags=["projects"])
 
 class ProjectIn(BaseModel):
@@ -72,6 +72,16 @@ async def get_project_overview(project_id: str, current_user: object = Depends(g
     if not data:
         raise HTTPException(500, "Could not load project overview")
     return data
+
+@router.get("/{project_id}/user/{info_id}/permissions")
+async def get_user_role_in_project(project_id: str, info_id: str, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
+    """Get the role of a user in the specified project."""
+    project = await get_by_id(project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+    user_permissions = await get_user_permission_by_info_id(project_id, info_id)
+    print("User permissions:", user_permissions)
+    return user_permissions
 
 @router.post("/{project_id}/user/invite")
 async def invite_user_to_project(project_id: str, payload: UserIn, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):

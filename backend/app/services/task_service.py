@@ -40,6 +40,11 @@ async def list_by_project(project_id: str) -> List[dict]:
                 "task": task,
                 "user": user
             })
+        else:
+            result.append({
+                "task": task,
+                "user": None
+            })
     return result
 
 
@@ -67,17 +72,17 @@ async def update(project_id: str, data: object) -> TaskStructure | None:
     old_task = await get_task_item_by_id(project_id, str(item_id))
     if not old_task:
         return None
-
-    if getattr(data_obj, "assignee_id", None) != getattr(old_task, "assignee_id", None):
-        print("Sending email notification for assignee change...")
-        user = await get_user(getattr(data_obj, "assignee_id", None))
-        # send email only if the user has an email address
-        if user and getattr(user, "id", None) != data_obj.assignee_id:
-            await send_task_assignment_email(data_obj)
-            payload = data_obj.model_dump()
-            payload.pop("user", None)
-            newTask = TaskStructure(**payload)
-            return await update_task_item(project_id, newTask)
+    if getattr(data_obj, "assignee_id", None) != "":
+        if getattr(data_obj, "assignee_id", None) != getattr(old_task, "assignee_id", None):
+            print("Sending email notification for assignee change...")
+            user = await get_user(getattr(data_obj, "assignee_id", None))
+            # send email only if the user has an email address
+            if user and getattr(user, "id", None) != data_obj.assignee_id:
+                await send_task_assignment_email(data_obj)
+                payload = data_obj.model_dump()
+                payload.pop("user", None)
+                newTask = TaskStructure(**payload)
+                return await update_task_item(project_id, newTask)
     return await update_task_item(project_id, data_obj)
 
 

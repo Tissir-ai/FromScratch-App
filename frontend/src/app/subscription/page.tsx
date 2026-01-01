@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Pricing from "@/components/Pricing";
 import { useTheme } from "@/context/ThemeContext";
 import Image from "next/image";
-import { Sun, Moon, ArrowLeft ,ShieldCheck, Shield  } from "lucide-react";
+import { Sun, Moon, ArrowLeft ,ShieldCheck, Shield, Link  } from "lucide-react";
 import { confirmCheckout } from '@/services/payment.service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -194,10 +194,10 @@ export default function SubscriptionPage() {
                                 Print receipt
                               </button>
 
-                              <button onClick={() => router.push('/projects')} className="px-4 py-2 rounded border">
-                                Go to projects
-                              </button>
-                            </div>
+                              <Link href="/projects" className="px-4 py-2 rounded border">
+                                   Go to projects
+                              </Link>
+                              </div>
 
                             <div className="text-sm text-muted-foreground">
                               <p>Need help? <a href="/contact" className="text-primary underline">Contact support</a></p>
