@@ -102,7 +102,7 @@ export default function DiagramsPage({ params }: DiagramsPageProps) {
     event?.stopPropagation?.();
     setSelectedNodeId(null);
     setSelectedEdge(edge);
-    setPanelOpen(false);
+    setPanelOpen(true);
   }, []);
 
   const updateNode = useCallback((id: string, data: any) => {

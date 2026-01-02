@@ -705,6 +705,16 @@ export const DiagramEdit: React.FC<DiagramEditProps> = ({ selectedNode, selected
     updateNode(selectedNode.id, { label: title, attributes: attrStrings, methods: methodStrings });
   };
 
+  // Edge editor state - must be declared before any conditional returns (React Rules of Hooks)
+  const [activeTab, setActiveTab] = useState<string>('Relations');
+  const [edgeType, setEdgeType] = useState<string>('default');
+  const [edgeColor, setEdgeColor] = useState<string>('#000000');
+  const [edgeWidth, setEdgeWidth] = useState<'sm' | 'md' | 'xl'>('md');
+  const [edgeLabel, setEdgeLabel] = useState<string>('');
+  const [edgeMarkerStart, setEdgeMarkerStart] = useState<'none' | 'Arrow' | 'ArrowClosed' | 'Circle'>('none');
+  const [edgeMarkerEnd, setEdgeMarkerEnd] = useState<'none' | 'Arrow' | 'ArrowClosed' | 'Circle'>('none');
+  const [strokeStyle, setStrokeStyle] = useState<'solid' | 'dashed' | 'dotted'>('solid');
+
   useEffect(() => {
     return () => { if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current); };
   }, []);
@@ -716,61 +726,17 @@ export const DiagramEdit: React.FC<DiagramEditProps> = ({ selectedNode, selected
     /* eslint-disable-next-line react-hooks/exhaustive-deps */ 
   }, [title]);
 
-  // render when either a node or an edge is selected
-  if (!selectedNode && !selectedEdge) return null;
-
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    if (selectedEdge) return 'Line';
-    if (selectedNode?.type === 'classNode') return 'Fields';
-    if (selectedNode?.type === 'sequenceLifeline') return 'Lifeline';
-    if (selectedNode?.type === 'textNode') return 'Text Style';
-    if (selectedNode?.type === 'noteNode') return 'Note Style';
-    return 'Relations';
-  });
-
+  // Reset active tab when selection changes
   useEffect(() => {
-    // Reset active tab when selection changes
     if (selectedEdge) setActiveTab('Line');
     else if (selectedNode?.type === 'classNode') setActiveTab('Fields');
     else if (selectedNode?.type === 'sequenceLifeline') setActiveTab('Lifeline');
-    else if (selectedNode?.type === 'textnode' || selectedNode?.type === 'textNode') setActiveTab('Text Style');
+    else if (selectedNode?.type === 'textNode') setActiveTab('Text Style');
     else if (selectedNode?.type === 'noteNode') setActiveTab('Note Style');
     else setActiveTab('Relations');
   }, [selectedNode, selectedEdge]);
 
-  // Edge editor state (when selectedEdge is present)
-  const [edgeType, setEdgeType] = useState<string>(selectedEdge?.type || 'default');
-  const [edgeColor, setEdgeColor] = useState<string>((selectedEdge?.style as any)?.stroke || '#000000');
-  const [edgeWidth, setEdgeWidth] = useState<'sm' | 'md' | 'xl'>((() => {
-    const w = (selectedEdge?.style as any)?.strokeWidth || 3;
-    if (w <= 1) return 'sm';
-    if (w <= 4) return 'md';
-    return 'xl';
-  })());
-  const [edgeLabel, setEdgeLabel] = useState<string>(String(selectedEdge?.label ?? ''));
-  const [edgeMarkerStart, setEdgeMarkerStart] = useState<'none' | 'Arrow' | 'ArrowClosed' | 'Circle'>((() => {
-    const ms = (selectedEdge as any)?.markerStart?.type;
-    if (!ms) return 'none';
-    if (ms === MarkerType.Arrow) return 'Arrow';
-    if (ms === MarkerType.ArrowClosed) return 'ArrowClosed';
-    if (ms === (MarkerType as any).Circle) return 'Circle';
-    return 'none';
-  })());
-  const [edgeMarkerEnd, setEdgeMarkerEnd] = useState<'none' | 'Arrow' | 'ArrowClosed' | 'Circle'>((() => {
-    const me = (selectedEdge as any)?.markerEnd?.type;
-    if (!me) return 'none';
-    if (me === MarkerType.Arrow) return 'Arrow';
-    if (me === MarkerType.ArrowClosed) return 'ArrowClosed';
-    if (me === (MarkerType as any).Circle) return 'Circle';
-    return 'none';
-  })());
-  const [strokeStyle, setStrokeStyle] = useState<'solid' | 'dashed' | 'dotted'>((() => {
-    const s = (selectedEdge?.style as any)?.strokeDasharray || '';
-    if (!s) return 'solid';
-    if (s === '6 4') return 'dashed';
-    return 'dotted';
-  })());
-
+  // Sync edge state when selectedEdge changes
   useEffect(() => {
     if (!selectedEdge) return;
     setEdgeType(selectedEdge.type || 'default');
@@ -793,6 +759,9 @@ export const DiagramEdit: React.FC<DiagramEditProps> = ({ selectedNode, selected
     else if (me === MarkerType.ArrowClosed) setEdgeMarkerEnd('ArrowClosed');
     else if (me === (MarkerType as any).Circle) setEdgeMarkerEnd('Circle');
   }, [selectedEdge]);
+
+  // render when either a node or an edge is selected
+  if (!selectedNode && !selectedEdge) return null;
 
   const applyEdgeChanges = (patch?: { type?: string; style?: any; label?: string; markerStart?: string | null; markerEnd?: string | null }) => {
     if (!selectedEdge || !updateEdge) return;

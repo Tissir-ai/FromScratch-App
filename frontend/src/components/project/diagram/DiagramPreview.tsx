@@ -30,6 +30,8 @@ import ActivityNode from '@/components/project/diagram/customNodes/ActivityNode'
 import TextNode from '@/components/project/diagram/customNodes/TextNode';
 import NoteNode from '@/components/project/diagram/customNodes/NoteNode';
 
+// Define nodeTypes outside component to prevent React Flow warning #002
+// https://reactflow.dev/error#002
 const nodeTypes = {
   classNode: ClassNode,
   useCaseNode: UseCaseNode,
@@ -38,7 +40,7 @@ const nodeTypes = {
   activityNode: ActivityNode,
   textNode: TextNode,
   noteNode: NoteNode,
-};
+} as const;
 
 interface DiagramPreviewProps {
   activeFlow: FlowDiagram | null;
