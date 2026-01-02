@@ -1,6 +1,7 @@
 import { mainApi } from './main-api'
 import type { CreateProjectPayload, Project , OverviewData } from '@/types/project.type'
 import type { AuthUser } from '@/types/user.type'
+import type { AuthUser } from '@/types/user.type'
 
 export interface RunStatus {
   run_id: string
@@ -26,10 +27,14 @@ export interface GenerateResponse {
 }
 
 export async function fetchProjects(user: AuthUser): Promise<Project[]> {
+export async function fetchProjects(user: AuthUser): Promise<Project[]> {
   // Base URL already includes /api; avoid double /api
+  return mainApi.get<Project[]>('/v1/projects', user)
   return mainApi.get<Project[]>('/v1/projects', user)
 }
 
+export async function fetchProjectOverview(id: string, user: AuthUser): Promise<OverviewData> {
+  return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`, user)
 export async function fetchProjectOverview(id: string, user: AuthUser): Promise<OverviewData> {
   return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`, user)
 }
@@ -64,9 +69,13 @@ export async function generateFromScratchProject({
 
 export async function getRunStatus(runId: string, user: AuthUser): Promise<RunStatus> {
   return mainApi.get<RunStatus>(`/v1/runs/${runId}`, user)
+export async function getRunStatus(runId: string, user: AuthUser): Promise<RunStatus> {
+  return mainApi.get<RunStatus>(`/v1/runs/${runId}`, user)
 }
 
 export async function pollRunStatus(
+  runId: string,
+  user: AuthUser, 
   runId: string,
   user: AuthUser, 
   onUpdate?: (status: RunStatus) => void,
@@ -78,6 +87,7 @@ export async function pollRunStatus(
   return new Promise((resolve, reject) => {
     const poll = async () => {
       try {
+        const status = await getRunStatus(runId, user)
         const status = await getRunStatus(runId, user)
         
         // Call update callback if provided
@@ -116,8 +126,12 @@ export async function pollRunStatus(
 
 export async function deleteProject(id: string, user: AuthUser): Promise<void> {
   await mainApi.delete<void>(`/v1/projects/${id}`, user)
+export async function deleteProject(id: string, user: AuthUser): Promise<void> {
+  await mainApi.delete<void>(`/v1/projects/${id}`, user)
 }
 
+export async function fetchProjectOwner(projectId: string, user: AuthUser): Promise<{ owner: string }> {
+  return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`, user)
 export async function fetchProjectOwner(projectId: string, user: AuthUser): Promise<{ owner: string }> {
   return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`, user)
 }

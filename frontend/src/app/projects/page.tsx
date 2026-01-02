@@ -74,6 +74,11 @@ export default function ProjectsPage() {
       router.push('/auth/signin')
       return
     }
+    if (!user) {
+      setLoading(false)
+      router.push('/auth/signin')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -186,7 +191,7 @@ export default function ProjectsPage() {
     try {
       // Start generation
       updateGenerationStep('init', 'in-progress')
-      const response = await generateFromScratchProject({ idea })
+      const response = await generateFromScratchProject(idea)
       updateGenerationStep('init', 'completed')
       setGenerationProgress(10)
       
