@@ -23,7 +23,12 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 interface DiagramsPageProps { params: { projectId: string } | Promise<{ projectId: string }> }
 
 export default function DiagramsPage({ params }: DiagramsPageProps) {
-  const resolved = (typeof (params as any)?.then === "function") ? React.use(params as Promise<{ projectId: string }>) : (params as { projectId: string });
+  // Always call React.use() unconditionally to maintain hooks order
+  const resolved = React.use(
+    typeof (params as any)?.then === "function"
+      ? (params as Promise<{ projectId: string }>)
+      : Promise.resolve(params as { projectId: string })
+  );
   const projectId = resolved.projectId;
   const [activeFlowId, setActiveFlowId] = useState<string | null>(null);
   const [diagrams, setDiagrams] = useState<any[]>([]);

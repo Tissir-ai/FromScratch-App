@@ -18,14 +18,19 @@ interface RequirementsPageProps {
 }
 
 export default function RequirementsPage({ params, searchParams }: RequirementsPageProps) {
-  const resolved = (typeof (params as any)?.then === "function")
-    ? (React as any).use(params as Promise<{ projectId: string }>)
-    : (params as { projectId: string });
+  // Always call React.use() unconditionally to maintain hooks order
+  const resolved = React.use(
+    typeof (params as any)?.then === "function"
+      ? (params as Promise<{ projectId: string }>)
+      : Promise.resolve(params as { projectId: string })
+  );
   const projectId = resolved.projectId;
 
-  const resolvedSearch = (typeof (searchParams as any)?.then === "function")
-    ? (React as any).use(searchParams as unknown as Promise<Record<string, string | string[] | undefined>>)
-    : (searchParams ?? {} as Record<string, string | string[] | undefined>);
+  const resolvedSearch = React.use(
+    typeof (searchParams as any)?.then === "function"
+      ? (searchParams as unknown as Promise<Record<string, string | string[] | undefined>>)
+      : Promise.resolve((searchParams ?? {}) as Record<string, string | string[] | undefined>)
+  );
 
   const category = Array.isArray(resolvedSearch.category) ? resolvedSearch.category[0] : resolvedSearch.category;
   const requirementId = Array.isArray(resolvedSearch.id) ? resolvedSearch.id[0] : resolvedSearch.id;

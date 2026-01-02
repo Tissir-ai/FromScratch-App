@@ -4,9 +4,12 @@ import TaskBoard from "@/components/project/taskManagement/TaskBoard";
 
 interface TasksPageProps { params: { projectId: string } | Promise<{ projectId: string }> }
 export default function TasksPage({ params }: TasksPageProps) {
-  const resolved = (typeof (params as any)?.then === "function")
-    ? React.use(params as Promise<{ projectId: string }>)
-    : (params as { projectId: string });
+  // Always call React.use() unconditionally to maintain hooks order
+  const resolved = React.use(
+    typeof (params as any)?.then === "function"
+      ? (params as Promise<{ projectId: string }>)
+      : Promise.resolve(params as { projectId: string })
+  );
   const projectId = resolved.projectId;
   return (
     <PageLayout title="Tasks" projectId={projectId}>
