@@ -71,7 +71,7 @@ const ResetPasswordPageInner = () => {
           {/* Logo */}
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-3">
-              <img src="/logos/fromScratch.png" alt="FromScratch.ai Logo" className="h-10 w-10 rounded-md" />
+              <img src="/logos/fromscratch.png" alt="FromScratch.ai Logo" className="h-10 w-10 rounded-md" />
               <span className="text-xl font-semibold">FromScratch.ai</span>
             </Link>
             <button

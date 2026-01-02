@@ -178,7 +178,7 @@ export default function DiagramExport({ rfInstance, flowContainerRef, activeFlow
       try {
         if (includeWatermark) {
           const watermark = new Image();
-          watermark.src = '/logos/fromScratch.png';
+          watermark.src = '/logos/fromscratch.png';
           await new Promise((res, rej) => { watermark.onload = () => res(null); watermark.onerror = rej; });
           const pad = 12;
           const frac = 0.12; // fixed watermark fraction of width
