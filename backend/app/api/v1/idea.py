@@ -26,7 +26,7 @@ router = APIRouter(prefix="/v1/idea", tags=["idea"])
 
 
 class IdeaIn(BaseModel):
-    project_id: Optional[UUID] = None  # 🆕 Now optional - will auto-create if not provided
+    project_id: Optional[str] = None  # 🆕 Now optional - will auto-create if not provided
     idea: str
     webhook_url: Optional[str] = None  # URL pour callback quand terminé
 

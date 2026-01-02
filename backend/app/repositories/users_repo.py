@@ -34,6 +34,13 @@ async def get_users_by_role(role_id: str) -> List[User] | None:
 async def get_user_by_info_id(info_id: str) -> User | None:
     return await User.find_one(User.info_id == info_id)
 
+async def get_user_by_info_id_and_projectId(info_id: str, project_id: str) -> User | None:
+    try:
+        pid = PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+    except Exception:
+        print(f"Invalid ids: info_id={info_id}, project_id={project_id}")
+        return None
+    return await User.find_one({"info_id": info_id, "project_id": pid})
 
 async def update_user(user_id: str, data: dict) -> User | None:
     user = await User.get(user_id)

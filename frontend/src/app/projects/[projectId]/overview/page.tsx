@@ -7,7 +7,7 @@ import { Users, Clock, Link} from "lucide-react";
 import type { OverviewData } from '@/types/project.type'; 
 import { fetchProjectOverview } from '@/services/project.service';
 import { NavLink } from "@/components/project/NavLink";
-import { formatRelativeTime } from "@/lib/utils";
+import {formatDate } from "@/lib/date-utils";
 
 interface OverviewPageProps {
   // During migration Next.js may provide params as a Promise; keep backward compatibility by allowing both.
@@ -70,7 +70,7 @@ export default function OverviewPage({ params }: OverviewPageProps) {
                   {overview?.name ?? 'Project'}
                 </h1>
                 <label className="text-sm md:text-base font-medium text-muted-foreground">
-                  Created {formatRelativeTime(new Date(overview?.project_created_at ?? Date.now()))} by  {(() => {
+                  Created {formatDate(overview?.project_created_at)} by  {(() => {
                     const owner = (overview?.members ?? []).find((m: any) => ((m.role || m.role_name || '').toLowerCase() === 'owner'));
                     if (!owner) return '';
                     return ` ${owner.name ?? 'Owner'}`;

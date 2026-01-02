@@ -95,11 +95,13 @@ async def update_task_item(
     if not doc:
         return None
     for idx, item in enumerate(doc.data):
-        if item.id == data.id:
+        print("Updating task item:", item.id , "with data:", data.id)
+        if  item.id == data.id:
             doc.data[idx] = data
             await doc.save()
             return data
     return None
+
 
 
 async def delete_task(doc_id: str) -> Task | None:

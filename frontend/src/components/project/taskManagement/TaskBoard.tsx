@@ -12,6 +12,7 @@ import { listTasks, createTask, updateTask, deleteTask, loadTasksmembers } from 
 import { connectRealtime, RealtimeEvent } from "@/services/realtime.service";
 import { useAuth } from "@/context/AuthContext";
 import type { TaskUserSelector } from "@/types/task.type";
+import type { UserRef } from "./types";
 
 interface TaskBoardProps {
   projectId: string;
@@ -34,10 +35,36 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
     if (!q) return tasks;
     return tasks.filter(t =>
       t.title.toLowerCase().includes(q) ||
-      (t.description || "").toLowerCase().includes(q) ||
-      (t.tags || []).some(tag => tag.toLowerCase().includes(q))
+      (t.description || "").toLowerCase().includes(q)
     );
   }, [tasks, query]);
+
+  const normalizeAssignee = (assignee?: UserRef | null): UserRef | undefined => {
+    if (!assignee) return undefined;
+    const effectiveId = assignee.id || assignee.info_id || "";
+    const effectiveInfoId = assignee.info_id || assignee.id || "";
+    return {
+      ...assignee,
+      id: effectiveId,
+      info_id: effectiveInfoId,
+    };
+  };
+
+  const toDate = (value?: Date | string | null): Date | undefined => {
+    if (!value) return undefined;
+    if (value instanceof Date) return value;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  };
+
+  const normalizeTask = (task: TaskItem): TaskItem => {
+    return {
+      ...task,
+      assignee: normalizeAssignee(task.assignee),
+      asign_date: toDate(task.asign_date as Date | string | undefined),
+      due_date: toDate(task.due_date as Date | string | undefined),
+    };
+  };
 
   const byStatus = useMemo(() => {
     const map: Record<Status, TaskItem[]> = { 
@@ -62,7 +89,7 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
         listTasks(projectId),
         loadTasksmembers(projectId)
       ]);
-      setTasks(tasksData);
+      setTasks(tasksData.map(normalizeTask));
       setAssignees(assigneesData);
     } catch (error: any) {
       console.error("Failed to load tasks or assignees:", error);
@@ -121,20 +148,27 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
 
     const task = tasks.find(t => t.id === id);
     if (task && task.status !== status) {
+      const previousTask = normalizeTask(task);
+      const optimisticTask = normalizeTask({
+        ...task,
+        status,
+        updatedAt: new Date().toISOString(),
+      });
       try {
         setSaving(true);
         // Optimistically update the UI first
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+        setTasks(prev => prev.map(t => (t.id === id ? optimisticTask : t)));
 
-        const updated = await updateTask(projectId, id, { status });
-        setTasks(prev => prev.map(t => t.id === id ? updated : t));
+        const updated = await updateTask(projectId, id, optimisticTask);
+        const normalizedUpdated = normalizeTask(updated);
+        setTasks(prev => prev.map(t => (t.id === id ? normalizedUpdated : t)));
         toast({
           title: "Task updated",
           description: "Task status has been updated successfully.",
         });
       } catch (error: any) {
         // Revert the optimistic update on error
-        setTasks(prev => prev.map(t => t.id === id ? task : t));
+        setTasks(prev => prev.map(t => (t.id === id ? previousTask : t)));
         console.error("Failed to update task status:", error);
 
         // Check if it's a validation error and provide a more user-friendly message
@@ -153,26 +187,23 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
   };
 
   const handleSaveTask = async (task: TaskItem) => {
-    console.log('[TaskBoard] Saving task:', task);
-    console.log('[TaskBoard] Task assignee:', task.assignee);
     try {
       setSaving(true);
       if (task.id) {
-        // Update existing task
-        console.log('[TaskBoard] Updating existing task:', task.id);
         const updated = await updateTask(projectId, task.id, task);
         console.log('[TaskBoard] Update result:', updated);
-        setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
+        const normalizedUpdated = normalizeTask(updated);
+        setTasks(prev => prev.map(t => (t.id === task.id ? normalizedUpdated : t)));
         toast({
           title: "Task updated",
           description: "Your changes have been saved successfully.",
         });
       } else {
         // Create new task
-        console.log('[TaskBoard] Creating new task');
         const created = await createTask(projectId, task);
         console.log('[TaskBoard] Create result:', created);
-        setTasks(prev => [created, ...prev]);
+        const normalizedCreated = normalizeTask(created);
+        setTasks(prev => [normalizedCreated, ...prev]);
         toast({
           title: "Task created",
           description: "New task has been created successfully.",
@@ -220,7 +251,7 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
   };
 
   const openDetails = (task: TaskItem) => {
-    setSelected(task);
+    setSelected(normalizeTask(task));
     setModalOpen(true);
   };
 
@@ -232,7 +263,7 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
       status,
       priority: "medium",
       asign_date: new Date(),
-      due_date: new Date(),
+      due_date: undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
