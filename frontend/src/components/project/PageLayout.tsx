@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
+  LogOut as ExitIcon,
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";  
@@ -474,6 +475,17 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
 
             <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => router.push('/projects')}
+              className="rounded-md w-16"
+              title="Exit to projects"
+            >
+              <span className="text-xs">Exit</span>
+              <ExitIcon className="h-5 w-5" />
             </Button>
           </div>
         </header>
