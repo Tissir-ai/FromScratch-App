@@ -110,7 +110,7 @@ export default function ProjectsPage() {
       const created = await createProject({
         name: payload.name,
         description: payload.description,
-      }, user)
+      })
       // Normalize backend _id to frontend id without indexing Project with "_id"
       const normalized = { ...created, id: (created as any)['_id'] ?? created.id }
       console.log("Created project:", normalized)
@@ -191,7 +191,7 @@ export default function ProjectsPage() {
     try {
       // Start generation
       updateGenerationStep('init', 'in-progress')
-      const response = await generateFromScratchProject(idea)
+      const response = await generateFromScratchProject({ idea })
       updateGenerationStep('init', 'completed')
       setGenerationProgress(10)
       
