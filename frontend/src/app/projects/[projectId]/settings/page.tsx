@@ -73,10 +73,10 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     );
   };
 
-  const addMember = (input: Omit<Member, "id">) => {
+  const addMember = (input: Omit<Member, "id"> | Omit<Member, "id" | "permissions">) => {
     const member: Member = {
       ...input,
-      permissions: input.permissions ?? { read: [], write: [] },
+      permissions: (input as any).permissions ?? { read: [], write: [] },
       id: crypto.randomUUID(),
     };
     setMembers((prev) => [...prev, member]);

@@ -8,6 +8,7 @@ import type { OverviewData } from '@/types/project.type';
 import { fetchProjectOverview } from '@/services/project.service';
 import { NavLink } from "@/components/project/NavLink";
 import {formatDate } from "@/lib/date-utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface OverviewPageProps {
   // During migration Next.js may provide params as a Promise; keep backward compatibility by allowing both.
@@ -22,6 +23,7 @@ export default function OverviewPage({ params }: OverviewPageProps) {
       : Promise.resolve(params as { projectId: string })
   );
   const projectId = resolved.projectId;
+  const { user } = useAuth();
 
   // Local state for overview
   const [overview, setOverview] = React.useState<OverviewData | null>(null);
@@ -33,7 +35,9 @@ export default function OverviewPage({ params }: OverviewPageProps) {
     setLoading(true);
     setError(null);
 
-    fetchProjectOverview(projectId).then(data => {
+    if (!user) return;
+
+    fetchProjectOverview(projectId, user).then(data => {
       if (!mounted) return;
       setOverview(data);
     }).catch(err => {
@@ -45,7 +49,7 @@ export default function OverviewPage({ params }: OverviewPageProps) {
     });
 
     return () => { mounted = false };
-  }, [projectId]);
+  }, [projectId, user]);
 
   // Convert API tasks (lowercase priorities) to UI-friendly caps and optional time placeholder
     const todayTasks = (overview?.tasks ?? []).slice(0,3).map(t => ({
