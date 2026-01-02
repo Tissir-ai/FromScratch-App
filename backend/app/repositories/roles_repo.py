@@ -10,7 +10,7 @@ async def get_roles_by_project(project_id: str) -> List[RoleDomainModel]:
     return await RoleDomainModel.find(RoleDomainModel.project_id == project_id).to_list()
 
 
-async def get_role_by_id(doc_id: str) -> RoleDomainModel | None:
+async def get_role_by_id(doc_id: str ) -> RoleDomainModel | None:
     return await RoleDomainModel.get(doc_id)
 
 

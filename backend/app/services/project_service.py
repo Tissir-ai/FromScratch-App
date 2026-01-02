@@ -49,6 +49,7 @@ async def create_project_with_roles(payload: object, current_user: object) -> Pr
     role_templates = {
         "Owner": [
             "manage_project",
+            "view_dashboard",
             "view_overview",
             "view_diagrams",
             "create_diagrams",

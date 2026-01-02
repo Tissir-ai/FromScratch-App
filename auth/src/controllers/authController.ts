@@ -174,6 +174,7 @@ export async function logout(_req: Request, res: Response, next: NextFunction): 
 export async function getUserByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.params.id;
+    console.log('Fetching user with ID:', userId);
     const user = await getUserById(userId);
     if (!user) {
       res.status(404).json({ message: 'User not found' });

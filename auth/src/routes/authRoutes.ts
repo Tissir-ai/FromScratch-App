@@ -28,6 +28,6 @@ router.get('/google/callback', googleCallback);
 router.get('/github/login', githubLoginRedirect);
 router.get('/github/callback', githubCallback);
 router.get('/me', authenticate, currentUser);
-router.get('/user/:id',authenticate ,getUserByIdController);
+router.get('/user/:id', authenticate, getUserByIdController);
 
 export default router;

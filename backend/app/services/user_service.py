@@ -11,6 +11,7 @@ from app.repositories.users_repo import (
     delete_user,
     set_role,
     get_user_by_info_id,
+    get_user_by_info_id_and_projectId,
     get_users_by_project
 )
 from app.repositories.roles_repo import get_role_by_id
@@ -57,6 +58,7 @@ async def get_members_info(project_id: str) -> List[dict]:
                 role_label = "member"
 
             members_info.append({
+                "id": str(u.id) or str(u._id),
                 "name": u.name,
                 "info_id": u.info_id,
                 "role": role_label,
@@ -94,9 +96,8 @@ async def search_users_by_project(project_id: str, query: str, limit: int = 10) 
 
     return result
 
-
 async def isAllowed(info_id: str, project_id: str,permission: str) -> User | None:
-    user = await get_user_by_info_id(info_id)
+    user = await get_user_by_info_id_and_projectId(info_id, project_id)
     if not user:
         return None
     project = await get_project_by_id(project_id)
@@ -134,8 +135,8 @@ async def assign_role(Project_id: str, payload: object) -> User | None:
     return await set_role(user.id, role.id)
 
 async def get_user_permission_by_info_id(project_id: str, info_id: str) -> dict | None:
-    user = await get_user_by_info_id(info_id)
-    if not user:
+    user = await get_user_by_info_id_and_projectId(info_id, project_id)
+    if not user:    
         return None
     if str(user.project_id) != str(project_id):
         return None
