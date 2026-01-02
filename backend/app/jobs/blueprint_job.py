@@ -24,13 +24,13 @@ def run_blueprint_job(run_id_str: str, project_id_str: str, idea: str, webhook_u
     """
     # Convertir les strings en UUID
     run_id = UUID(run_id_str)
-    project_id = UUID(project_id_str)
+    project_id = project_id_str
     
     # RQ est synchrone, on doit exécuter l'async dans une boucle
     asyncio.run(_async_run_blueprint_job(run_id, project_id, idea, webhook_url))
 
 
-async def _async_run_blueprint_job(run_id: UUID, project_id: UUID, idea: str, webhook_url: str | None):
+async def _async_run_blueprint_job(run_id: UUID, project_id: str, idea: str, webhook_url: str | None):
     """Version async du job"""
     print(f"[JOB] Starting job for run_id={run_id}, project_id={project_id}")
     

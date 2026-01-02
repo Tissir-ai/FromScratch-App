@@ -154,6 +154,7 @@ async def update(project_id: str, data: dict) -> Project | None:
     return await update_project(project_id, data)
 
 
+
 async def delete(project: Project) -> Project | None:
     if project.chats_id is not None:
         await delete_chat(project.chats_id) 
@@ -229,3 +230,4 @@ async def load_overview(project: Project) -> dict:
             "members": [],
             "project_created_at": project.created_at,
         }
+
