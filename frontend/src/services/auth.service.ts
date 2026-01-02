@@ -73,10 +73,6 @@ export async function getSubscriptionPlanByUserId(userId: string): Promise<Subsc
   return authApi.get<SubscriptionPlan | null>(`/subscriptions/plan/user/${userId}`);
 }
 
-export async function getUserById(userId: string): Promise<AuthUser> {
-  return await authApi.get<AuthUser>(`/user/${userId}`);
-}
-
 export async function forgotPassword(email: string): Promise<void> {
   await authApi.post('/auth/forgot-password', { email });
 }

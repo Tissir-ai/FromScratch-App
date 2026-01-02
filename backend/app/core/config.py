@@ -15,6 +15,10 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379/0"
     
+    # Gmail Configuration for email notifications
+    gmail_user: str | None = Field(None, alias="GMAIL_USER")
+    gmail_app_password: str | None = Field(None, alias="GMAIL_APP_PASSWORD")
+    
     model_provider: str = Field("openai", alias="MODEL_PROVIDER")
     #openai_api_key: str | None = Field(None, alias="OPENAI_API_KEY")
     #litellm_model: str = Field("gpt-4o-mini", alias="LITELLM_MODEL")

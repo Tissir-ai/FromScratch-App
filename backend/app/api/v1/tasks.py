@@ -16,7 +16,7 @@ router = APIRouter(prefix="/v1/tasks", tags=["tasks"])
 
 
 @router.post("/{project_id}", response_model=TaskStructure)
-async def create_task(project_id: str, payload: TaskStructure, current_user: object = Depends(get_current_user), _=Depends(get_db)):
+async def create_task(project_id: str, payload: dict, current_user: object = Depends(get_current_user), _=Depends(get_db)):
     project = await get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -36,15 +36,14 @@ async def list_tasks(project_id: str, current_user: object = Depends(get_current
     return await list_by_project(project_id)
 
 @router.put("/{project_id}/{doc_id}", response_model=TaskStructure)
-async def update_task(project_id: str, doc_id: str, payload: TaskStructure, current_user: object = Depends(get_current_user), _=Depends(get_db)):
+async def update_task(project_id: str, doc_id: str, payload: dict, current_user: object = Depends(get_current_user), _=Depends(get_db)):
     project = await get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
     if not await isAllowed(current_user.get("id"), project_id, "edit_tasks"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    print("API received update payload:", payload)
-    updated = await update(project_id,payload)
+    updated = await update(project_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found")
     await broadcast_crud_event(str(project_id), "tasks", "update", "tasks", updated if isinstance(updated, dict) else (updated.model_dump() if hasattr(updated, "model_dump") else {"id": str(doc_id)}))

@@ -5,6 +5,7 @@ export interface UserRef {
   id: string;
   name: string;
   email?: string;
+  info_id?: string;
 }
 
 export interface TaskItem {
@@ -18,8 +19,6 @@ export interface TaskItem {
   due_date?: Date;
   createdAt: string;
   updatedAt: string;
-  tags?: string[];
-  points?: number;
 }
 
 export type TaskFilters = {
@@ -27,16 +26,15 @@ export type TaskFilters = {
   status: Status | "all";
   priority: Priority | "all";
   assigneeId?: string;
-  tags?: string[];
 };
 
 export interface TaskUserSelector {
   id: string;
-  first_name: string;
-  last_name: string;
+  name: string;
   email: string;
   role: string;
   team: string;
+  info_id: string;
 }
 
 // DTOs for API communication
