@@ -27,12 +27,12 @@ interface RegisterResponse {
 }
 
 export async function login(payload: LoginPayload): Promise<AuthUser> {
-  const res = await authApi.post<LoginResponse>('/auth/login', payload);
+  const res = await authApi.post<LoginResponse>('/login', payload);
   return res.user;
 }
 
 export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
-  return authApi.post<RegisterResponse>('/auth/register', payload);
+  return authApi.post<RegisterResponse>('/register', payload);
 }
 
 interface MeResponse {
@@ -42,11 +42,11 @@ interface MeResponse {
 }
 
 export async function getCurrentUser(): Promise<MeResponse> {
-  return authApi.get<MeResponse>('/auth/me');
+  return authApi.get<MeResponse>('/me');
 }
 
 export async function logout(): Promise<void> {
-  await authApi.post('/auth/logout');
+  await authApi.post('/logout');
 }
 
 export function getGoogleLoginUrl(returnTo?: string, errorRedirect?: string): string {
@@ -74,17 +74,17 @@ export async function getSubscriptionPlanByUserId(userId: string): Promise<Subsc
 }
 
 export async function getUserById(userId: string): Promise<AuthUser> {
-  return await authApi.get<AuthUser>(`/users/${userId}`);
+  return await authApi.get<AuthUser>(`/user/${userId}`);
 }
 
 export async function forgotPassword(email: string): Promise<void> {
-  await authApi.post('/auth/forgot-password', { email });
+  await authApi.post('/forgot-password', { email });
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
-  await authApi.post('/auth/reset-password', { token, newPassword });
+  await authApi.post('/reset-password', { token, newPassword });
 }
 
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
-  await authApi.post('/auth/change-password', { oldPassword, newPassword });
+  await authApi.post('/change-password', { oldPassword, newPassword });
 }

@@ -458,7 +458,7 @@ export default function DiagramsPage({ params }: DiagramsPageProps) {
         <div className="flex-1 h-full relative">
           {!activeFlowId ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <img src="/logos/fromScratch.png" alt="Diagram Logo" className="w-24 h-24 mb-6 opacity-80" />
+              <img src="/logos/fromscratch.png" alt="Diagram Logo" className="w-24 h-24 mb-6 opacity-80" />
               <h2 className="text-2xl font-bold text-muted-foreground mb-2">FromScratch Diagram Previewer</h2>
               <p className="text-sm text-muted-foreground">Select a diagram from the list to begin editing.</p>
             </div>
