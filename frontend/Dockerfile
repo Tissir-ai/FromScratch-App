@@ -1,5 +1,6 @@
+# syntax=docker/dockerfile:1
 # ============ BUILD STAGE ============
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
@@ -7,10 +8,11 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
+COPY bun.lockb* ./
 
-# Install ALL dependencies for building
-RUN npm install
+# Install ALL dependencies with Bun (10-25x faster than npm)
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install
 
 # Copy source code
 COPY . .
@@ -20,7 +22,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
 # ============ PRODUCTION STAGE ============
 FROM node:20-alpine AS runner

@@ -1,13 +1,13 @@
 export interface LogEntry {
-  id?: string;
+  id: string;
   _id?: string;
   message: string;
-  user_id?: string | null;
+  user_id?: string;
   timestamp: string;
 }
 
 export interface Log {
-  id?: string;
+  id: string;
   _id?: string;
   project_id: string;
   data: LogEntry[];

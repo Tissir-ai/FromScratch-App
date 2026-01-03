@@ -12,7 +12,12 @@ import { fetchProjectById, updateProject } from "@/services/project.service";
 interface SettingsPageProps { params: { projectId: string } | Promise<{ projectId: string }> }
 
 export default function SettingsPage({ params }: SettingsPageProps) {
-  const resolved = (typeof (params as any)?.then === "function") ? React.use(params as Promise<{ projectId: string }>) : (params as { projectId: string });
+  // Always call React.use() unconditionally to maintain hooks order
+  const resolved = React.use(
+    typeof (params as any)?.then === "function"
+      ? (params as Promise<{ projectId: string }>)
+      : Promise.resolve(params as { projectId: string })
+  );
   const projectId = resolved.projectId;
   // Project details
   const [projectName, setProjectName] = useState("Amazing Project");

@@ -4,7 +4,7 @@ from uuid import UUID
 
 class BlueprintState(TypedDict):
     # Context
-    project_id: UUID
+    project_id: str  # MongoDB ObjectId as string
     run_id: UUID
     idea: str
 
@@ -24,8 +24,9 @@ class BlueprintState(TypedDict):
     requirements_content: Optional[str]      # Contenu requirements.md
     diagrams_content: Optional[str]          # Contenu diagrams.md
     diagrams_json_content: Optional[str]     # JSON React Flow pour frontend
-    planner_content: Optional[str]           # Contenu plan.md
+    planner_json_content: Optional[str]      # JSON structuré (time, cost, stack, risks, criteria, tasks)
     export_content: Optional[str]            # Contenu final export.md
+    export_json_content: Optional[str]       # JSON structuré (document, github_export)
 
     # Final
     blueprint_markdown: Optional[str]

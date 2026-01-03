@@ -24,7 +24,7 @@ async def create_task(project_id: str, payload: dict, current_user: object = Dep
     if not await isAllowed(current_user.get("id"), project_id, "create_tasks"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     task = await create(project_id, payload)
-    await log_activity(project_id, current_user.get("id"), f"{current_user.get("name",'unknown user')} Created task: {payload.get('title', 'Untitled')}")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Created task: {payload.get('title', 'Untitled')}")
     await broadcast_crud_event(str(project_id), "tasks", "create", "tasks", task.model_dump() if hasattr(task, "model_dump") else dict(task))
     return task
 
