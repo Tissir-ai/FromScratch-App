@@ -59,4 +59,5 @@ async def run_blueprint_pipeline(
         "diagrams": final_state.get("diagrams_content"),
         "diagrams_json": final_state.get("diagrams_json_content"),
         "plan": final_state.get("planner_content"),
+        "plan_json": final_state.get("planner_json_content"),
     }
