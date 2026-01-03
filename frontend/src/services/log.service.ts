@@ -2,31 +2,19 @@ import { mainApi } from './main-api';
 import type { Log, LogEntry } from '@/types/log.type';
 import type { AuthUser } from '@/types/user.type';
 
-export async function fetchLogs(projectId: string, user: AuthUser): Promise<Log[]> {
-  return mainApi.get<Log[]>(`/v1/logs/${projectId}`, user);
+// Fetch all logs for a project (requires manage_project permission)
+export async function fetchLogs(projectId: string, _user?: unknown): Promise<Log[]> {
+  if (!projectId) {
+    throw new Error('Project ID is required to fetch logs');
+  }
+  return mainApi.get<Log[]>(`/v1/logs/${projectId}`);
 }
 
-export async function createLog(
-  projectId: string,
-  payload: { data: LogEntry[] },
-  user: AuthUser
-): Promise<Log> {
-  return mainApi.post<Log>(`/v1/logs/${projectId}`, payload, user);
+// Fetch logs for the current user in a project
+export async function fetchMyLogs(projectId: string): Promise<any[]> {
+  if (!projectId) {
+    throw new Error('Project ID is required to fetch logs');
+  }
+  return mainApi.get<any[]>(`/v1/logs/${projectId}/my-logs`);
 }
 
-export async function updateLog(
-  projectId: string,
-  logId: string,
-  payload: Partial<Log>,
-  user: AuthUser
-): Promise<Log> {
-  return mainApi.put<Log>(`/v1/logs/${projectId}/${logId}`, payload, user);
-}
-
-export async function deleteLog(
-  projectId: string,
-  logId: string,
-  user: AuthUser
-): Promise<{ deleted: boolean }> {
-  return mainApi.delete<{ deleted: boolean }>(`/v1/logs/${projectId}/${logId}`, user);
-}

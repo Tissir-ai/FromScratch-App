@@ -6,8 +6,8 @@ from typing import List
 
 class LogEntry(BaseModel):
     id:  PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
-    message: str
-    user_id:  PydanticObjectId | None = None
+    message: str 
+    user_id:  PydanticObjectId
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 class LogDomain(Document):

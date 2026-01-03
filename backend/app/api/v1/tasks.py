@@ -11,6 +11,7 @@ from app.services.role_service import user_has_permission
 from app.domain.user import User
 from app.services.user_service import isAllowed
 from app.services.realtime import broadcast_crud_event
+from app.services.log_service import log_activity
 
 router = APIRouter(prefix="/v1/tasks", tags=["tasks"])
 
@@ -23,6 +24,7 @@ async def create_task(project_id: str, payload: dict, current_user: object = Dep
     if not await isAllowed(current_user.get("id"), project_id, "create_tasks"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     task = await create(project_id, payload)
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get("name",'unknown user')} Created task: {payload.get('title', 'Untitled')}")
     await broadcast_crud_event(str(project_id), "tasks", "create", "tasks", task.model_dump() if hasattr(task, "model_dump") else dict(task))
     return task
 
@@ -46,6 +48,7 @@ async def update_task(project_id: str, doc_id: str, payload: dict, current_user:
     updated = await update(project_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Updated task: {payload.get('title', 'Untitled')}")
     await broadcast_crud_event(str(project_id), "tasks", "update", "tasks", updated if isinstance(updated, dict) else (updated.model_dump() if hasattr(updated, "model_dump") else {"id": str(doc_id)}))
     return updated
 
@@ -61,5 +64,6 @@ async def delete_task(project_id: str, doc_id: str, current_user: object = Depen
     deleted = await remove(project_id, doc_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Task not found")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Deleted a task")
     await broadcast_crud_event(str(project_id), "tasks", "delete", "tasks", {"id": str(doc_id)})
     return {"deleted": True}
