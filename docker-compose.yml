@@ -148,7 +148,6 @@ services:
       - STORAGE_SECRET_KEY=minioadmin
       - STORAGE_BUCKET=fromscratch
       - MODEL_PROVIDER=openai
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - LITELLM_MODEL=gpt-4o-mini
       - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     networks:
