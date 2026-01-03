@@ -25,16 +25,14 @@ async function requireAuthenticatedUser(): Promise<User> {
   }
 }
 
-
-
-
-
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${MAIN_API_BASE_URL}${path}`;
 
   const user = await requireAuthenticatedUser();
-  
   if (!user) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
     throw new Error('Authentication required. Please log in.');
   }
 
