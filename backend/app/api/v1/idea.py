@@ -15,6 +15,8 @@ from app.services.project_service import create, update , create_project_with_ro
 from app.domain.task import TaskStructure
 from app.domain.diagram import DiagramStructure
 from app.domain.requirement import RequirementStructure
+from app.domain.exports import ExportDomain
+from app.domain.planner import PlannerDomain
 from app.services.task_service import create as create_task
 from app.services.diagram_service import create as create_diagram
 from app.services.requirement_service import create as create_requirement
@@ -42,6 +44,18 @@ async def generate_blueprint(payload: IdeaIn, current_user: object = Depends(get
             created_by=current_user.get("id")
         )
         created_project = await create_project_with_roles(temp_project, current_user)
+        
+        export_domain = ExportDomain(
+            project_id=created_project.id,
+        )
+
+        planner_domain = PlannerDomain(
+            project_id=created_project.id,
+        )
+
+        await export_domain.insert()
+        await planner_domain.insert()
+
         project_id = created_project.id
         print(f"[IDEA_API] Created temporary project: {project_id}")
         # Create placeholder documents (tasks, diagrams, requirements) in parallel
@@ -79,8 +93,10 @@ async def generate_blueprint(payload: IdeaIn, current_user: object = Depends(get
                 "tasks_id": tasks_doc.id,
                 "diagrams_id": diagrams_doc.id,
                 "requirements_id": requirements_doc.id,
+                "planners_id": planner_domain.id,
+                "exports_id": export_domain.id,
             })
-            print(f"[IDEA_API] Created placeholders: tasks={tasks_doc.id}, diagrams={diagrams_doc.id}, requirements={requirements_doc.id}")
+            print(f"[IDEA_API] Created placeholders: tasks={tasks_doc.id}, diagrams={diagrams_doc.id}, requirements={requirements_doc.id}, planner={planner_domain.id}, export={export_domain.id}")
         except Exception as e:
             print(f"[IDEA_API] Failed to create placeholders: {e}")
     else:
