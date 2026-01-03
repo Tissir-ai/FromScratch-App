@@ -97,8 +97,12 @@ services:
       dockerfile: Dockerfile
     container_name: fromscratch-backend
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
+
     environment:
       - APP_ENV=production
+      - FRONTEND_URL=https://tissirai.fojas.ai
       - SECRET_KEY=your-backend-secret-key-min-32-characters-here
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
       - MONGODB_URI=mongodb://admin:admin@mongo:27017/fromscratch?authSource=admin
@@ -107,9 +111,7 @@ services:
       - STORAGE_ACCESS_KEY=minioadmin
       - STORAGE_SECRET_KEY=minioadmin
       - STORAGE_BUCKET=fromscratch
-      - MODEL_PROVIDER=nvidia
-      - NVIDIA_API_KEY=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
-      - NVIDIA_MODEL=deepseek-ai/deepseek-r1
+      - MODEL_PROVIDER=openai
       - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     expose:
       - "8000"
@@ -133,6 +135,8 @@ services:
       dockerfile: Dockerfile
     container_name: fromscratch-worker
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
       - APP_ENV=production
       - SECRET_KEY=your-backend-secret-key-min-32-characters-here
@@ -143,9 +147,9 @@ services:
       - STORAGE_ACCESS_KEY=minioadmin
       - STORAGE_SECRET_KEY=minioadmin
       - STORAGE_BUCKET=fromscratch
-      - MODEL_PROVIDER=nvidia
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
-      - NVIDIA_MODEL=deepseek-ai/deepseek-r1
+      - MODEL_PROVIDER=openai
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LITELLM_MODEL=gpt-4o-mini
       - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     networks:
       - fromscratch-network

@@ -60,16 +60,6 @@ async def _async_run_blueprint_job(run_id: UUID, project_id: str, idea: str, web
         await runs_repo.update_run_status(run_id, "succeeded")
         publish(f"run:{run_id}", "STATUS:succeeded")
 
-        # 2) Exécuter le pipeline d'agents
-        result = await run_blueprint_pipeline(
-            project_id=project_id,
-            run_id=run_id,
-            idea=idea,
-        )
-
-        # 3) Mettre à jour le statut à "succeeded"
-        await runs_repo.update_run_status(run_id, "succeeded")
-        publish(f"run:{run_id}", "STATUS:succeeded")
 
         # 4) Appeler le webhook si fourni
         if webhook_url:

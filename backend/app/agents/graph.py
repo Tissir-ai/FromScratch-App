@@ -10,6 +10,7 @@ from app.agents.nodes import (
     node_diagrams,
     node_planner,
     node_export,
+    node_persist_to_collections,
     make_initial_state,
 )
 
@@ -21,13 +22,15 @@ def build_graph():
     g.add_node("DIAGRAMS", node_diagrams)
     g.add_node("PLANNER", node_planner)
     g.add_node("EXPORT", node_export)
+    g.add_node("PERSIST", node_persist_to_collections)
 
     g.set_entry_point("METADATA")
     g.add_edge("METADATA", "REQUIREMENTS")
     g.add_edge("REQUIREMENTS", "DIAGRAMS")
     g.add_edge("DIAGRAMS", "PLANNER")
     g.add_edge("PLANNER", "EXPORT")
-    g.add_edge("EXPORT", END)
+    g.add_edge("EXPORT", "PERSIST")
+    g.add_edge("PERSIST", END)
 
     return g.compile()
 
