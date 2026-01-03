@@ -10,6 +10,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface RequestOptions extends RequestInit {
   method?: HttpMethod;
   body?: any;
+  responseType?: 'json' | 'text' | 'blob';
 }
 
 async function requireAuthenticatedUser(): Promise<User> {
@@ -51,11 +52,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   let data: any = null;
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json().catch(() => null);
+  const desired = options.responseType ?? 'json';
+  if (desired === 'blob') {
+    data = await response.blob().catch(() => null);
   } else {
-    data = await response.text().catch(() => null);
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json().catch(() => null);
+    } else {
+      data = await response.text().catch(() => null);
+    }
   }
 
   if (!response.ok) {

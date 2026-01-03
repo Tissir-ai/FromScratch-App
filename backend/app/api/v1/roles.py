@@ -21,14 +21,10 @@ async def create_role(project_id: str, payload: RoleDomain, current_user: object
         raise HTTPException(status_code=404, detail="Project not found")
     if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    # Ensure the incoming payload is associated with the project
-    try:
-        payload.project_id = project_id
-    except Exception:
-        # If payload is not assignable, construct a new RoleDomain instance
-        payload = RoleDomain(project_id=project_id, name=getattr(payload, "name", ""), permissions=getattr(payload, "permissions", []))
+    # If payload is not assignable, construct a new RoleDomain instance
+    payload = RoleDomain(project_id=project_id, name=getattr(payload, "name", ""), permissions=getattr(payload, "permissions", []))
     role = await create(payload)
-    await log_activity(project_id, current_user.get("id"), f"Created role: {role.name}")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get("name")} Created role: {role.name}")
     await broadcast_crud_event(str(project_id), "roles", "create", "roles", role.model_dump() if hasattr(role, "model_dump") else dict(role))
     return role
 
@@ -44,14 +40,20 @@ async def list_roles(project_id: str,current_user: object = Depends(get_current_
     return roles
 
 
-@router.put("/{project_id}", response_model=RoleDomain)
-async def update_role(project_id: str,  payload: RoleDomain, current_user: object = Depends(get_current_user), _=Depends(get_db),):
+@router.put("/{project_id}/{role_id}", response_model=RoleDomain)
+async def update_role(project_id: str, role_id: str, payload: dict, current_user: object = Depends(get_current_user), _=Depends(get_db),):
     project = await get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    role = await update(payload)
+    new_data = RoleDomain(
+        id=role_id,
+        project_id=project_id,
+        name=payload.get("name", ""),
+        permissions=payload.get("permissions", []),
+    )
+    role = await update(new_data)
     await log_activity(project_id, current_user.get("id"), f"Updated role: {role.name}")
     await broadcast_crud_event(str(project_id), "roles", "update", "roles", role.model_dump() if hasattr(role, "model_dump") else dict(role))
     return role

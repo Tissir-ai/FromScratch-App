@@ -28,7 +28,7 @@ async def get_roles_info_by_project(project_id: str) -> List[dict] | None:
             result.append({"name": role.name, "users_count": len(users) if users else 0})
     return result
 
-async def get_roles_and_users_by_project(project_id: str) -> List[dict] | None:
+async def get_roles_and_users_by_project(project_id: str) -> List[dict]:
     roles = await get_roles_by_project(project_id)
     result = []
     if roles:
@@ -36,8 +36,15 @@ async def get_roles_and_users_by_project(project_id: str) -> List[dict] | None:
             name = (getattr(role, "name", "") or "").lower()
             if name in ("guest", "owner"):
                 continue
-            users = await get_users_by_role(role.id)
-            result.append({"id": role.id, "name": role.name, "permission" : role.permissions ,  "users": users if users else []})
+            users = await get_users_by_role(role.id) or []
+            users_list = [{"id": str(getattr(user, "id", "")), "name": getattr(user, "name", "")} for user in users]
+            permissions = getattr(role, "permissions", []) or []
+            result.append({
+                "id": str(getattr(role, "id", "")),
+                "name": getattr(role, "name", ""),
+                "permissions": permissions,
+                "users": users_list,
+            })
     return result
 
 

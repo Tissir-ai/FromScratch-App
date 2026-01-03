@@ -78,7 +78,7 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
       diagram: 'diagrams',
       diagrams: 'diagrams',
       report: 'reports',
-      log: 'logs',
+      activity: 'activities',
       'tasks&sprints': 'tasks',
       task: 'tasks',
     };
@@ -179,7 +179,7 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
       { icon: FileText, label: "Requirements", path: `/projects/${projectId}/requirements`, slug: 'requirements', requiredPermission: 'view_requirements' },
       { icon: CheckSquare, label: "Tasks & Sprints", path: `/projects/${projectId}/tasks`, slug: 'tasks', requiredPermission: 'view_tasks' },
       { icon: BarChart3, label: "Reports", path: `/projects/${projectId}/reports`, slug: 'reports', requiredPermission: 'view_reports' },
-      { icon: History, label: "Activity Logs", path: `/projects/${projectId}/logs`, slug: 'logs', requiredPermission: 'manage_project' },
+      { icon: History, label: "Activity Logs", path: `/projects/${projectId}/activities`, slug: 'activities', requiredPermission: 'manage_project' },
       { icon: Settings, label: "Settings", path: `/projects/${projectId}/settings`, slug: 'settings', requiredPermission: 'manage_project' },
     ];
 
@@ -207,7 +207,7 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
           return 'view_tasks';
         case 'reports':
           return 'view_reports';
-        case 'logs':
+        case 'activities':
           return 'manage_project';
         case 'settings':
           return 'manage_project';

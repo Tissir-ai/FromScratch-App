@@ -27,8 +27,15 @@ async def get_users_by_project(project_id: str) -> List[User] | None:
     return await User.find(User.project_id == pid).to_list()
 
 
-async def get_users_by_role(role_id: str) -> List[User] | None:
-    return await User.find(User.role_id == role_id).to_list()
+async def get_users_by_role(role_id: str | PydanticObjectId) -> List[User] | None:
+    try:
+        pid = (
+            PydanticObjectId(role_id) if isinstance(role_id, str) else role_id
+        )
+    except Exception:
+        print("Invalid role id:", role_id)
+        return None
+    return await User.find(User.role_id == pid).to_list()
 
 async def get_user_by_id(id: str | PydanticObjectId) -> User | None:
     try:
@@ -60,7 +67,12 @@ async def update_user(user_id: str, data: dict) -> User | None:
 
 
 async def delete_user(user_id: str) -> User | None:
-    user = await User.get(user_id)
+    try:
+        pid = PydanticObjectId(user_id) if isinstance(user_id, str) else user_id
+    except Exception:
+        print(f"Invalid user id: {user_id}")
+        return None
+    user = await User.get(pid)
     if user:
         await user.delete()
     return user

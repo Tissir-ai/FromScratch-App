@@ -3,13 +3,14 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.api.deps import get_db, get_current_user
 from app.services.project_service import create_project_with_roles, list_for_user, get_by_id, delete as delete_project, load_overview
-from app.services.user_service import isAllowed, invite_user , remove as delete_user, assign_role , get_members_info , get_user_permission_by_info_id
+from app.services.user_service import isAllowed, invite_user , remove as delete_user, assign_role , get_members_info ,get_members_info_settings, get_user_permission_by_info_id
 from app.services.log_service import log_activity
 router = APIRouter(prefix="/v1/projects", tags=["projects"])
 
 class ProjectIn(BaseModel):
     name: str
     description: str = ""
+    full_description: str = "" 
 
 class UserInviteIn(BaseModel):
     email: str
@@ -39,10 +40,25 @@ async def list_projects(current_user: object = Depends(get_current_user), db: As
     return await list_for_user(current_user.get("id"))
 
 @router.get("/{project_id}")
-async def get_project_endpoint(project_id: str, db: AsyncIOMotorDatabase = Depends(get_db)):
+async def get_project_endpoint(project_id: str,current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
     p = await get_by_id(project_id)
     if not p:
         raise HTTPException(404, "Project not found")
+    if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
+        raise HTTPException(403, "Not enough permissions")
+    return p
+
+@router.put("/{project_id}")
+async def get_project_endpoint(project_id: str, payload: ProjectIn, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
+    p = await get_by_id(project_id)
+    if not p:
+        raise HTTPException(404, "Project not found")
+    if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
+        raise HTTPException(403, "Not enough permissions")
+    p.name = payload.name
+    p.description = payload.description
+    p.full_description = payload.full_description
+    await p.save()
     return p
 
 @router.get("/{project_id}/members")
@@ -51,6 +67,15 @@ async def get_project_members(project_id: str, current_user: object = Depends(ge
     if not p:
         raise HTTPException(404, "Project not found")
     return await get_members_info(project_id)
+
+@router.get("/{project_id}/members/settings")
+async def get_project_members_settings(project_id: str, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
+    project = await get_by_id(project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+    if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
+        raise HTTPException(403, "Not enough permissions")
+    return await get_members_info_settings(project_id)
 
 @router.delete("/{project_id}")
 async def delete_project_endpoint(project_id: str, current_user: object = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_db)):
@@ -253,5 +278,5 @@ async def delete_user_from_project(project_id: str, user_id: str, current_user: 
         raise HTTPException(404, "Project not found")
     if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
         raise HTTPException(403, "Not enough permissions")
-    await log_activity(project_id, current_user.get("id"), f"Removed user from project")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get("name")} Removed user from project")
     return await delete_user(project_id , user_id)

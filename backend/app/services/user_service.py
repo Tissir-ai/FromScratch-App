@@ -132,6 +132,20 @@ async def get_members_info(project_id: str) -> List[dict]:
                 "team": "--" if role_label in ("guest", "owner") else role_name_lower,
             })
     return members_info
+async def get_members_info_settings(project_id: str) -> List[dict]:
+    users = await get_users_by_project(project_id)
+    members_info = []
+    if users:
+        for u in users:
+            role = await get_role_by_id(u.role_id)
+            role_name_lower = (role.name.lower() if role and getattr(role, "name", None) else "")
+           
+            members_info.append({
+                "id": str(u.id) or str(u._id),
+                "name": u.name,
+                "role": role_name_lower,
+            })
+    return members_info
 async def get_member_info_by_id(user_id: str) -> dict | None:
     user = await get_user_by_id(user_id)
     if user:
@@ -198,9 +212,9 @@ async def update(user_id: str, data: dict) -> User | None:
     return await update_user(user_id, data)
 
 
-async def remove(prject_id :str,user_id: str) -> User | None:
+async def remove(project_id: str, user_id: str) -> User | None:
     user = await get_user(user_id)
-    if user.project_id != prject_id:
+    if str(user.project_id) != project_id:
         return None
     return await delete_user(user_id)
 

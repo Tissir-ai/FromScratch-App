@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 
-type Section = "project" | "teams" | "members";
+export type Section = "project" | "roles" | "access";
 
 interface SettingsSidebarProps {
   active: Section;
@@ -10,8 +10,8 @@ interface SettingsSidebarProps {
 
 const items: { key: Section; label: string }[] = [
   { key: "project", label: "Options" },
-  { key: "teams", label: "Teams" },
-  { key: "members", label: "Manage access" },
+  { key: "roles", label: "Roles" },
+  { key: "access", label: "Manage access" },
 ];
 
 export default function SettingsSidebar({ active, onSelect }: SettingsSidebarProps) {
