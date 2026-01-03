@@ -63,6 +63,8 @@ async def create_project_with_roles(payload: object, current_user: object) -> Pr
             "create_requirements",
             "edit_requirements",
             "delete_requirements",
+            "view_reports",
+            "download_reports",
             "view_logs",
             "create_logs",
             "edit_logs",

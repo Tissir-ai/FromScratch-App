@@ -12,7 +12,7 @@
     ],
     "config": { 
      "nbrProjects": 2,
-     "allowPages": ["diagram","reports","requirements","settings"] ,
+     "allowPages": ["overview","diagram","reports","requirements","settings"] ,
      "pdfExport": false,
      "githubExport": false,
      "chatTokens": 3
@@ -33,7 +33,7 @@
     ],
     "config": { 
      "nbrProjects": 2,
-     "allowPages": ["diagram","reports","requirements","settings"] ,
+     "allowPages": ["overview","diagram","reports","requirements","settings"] ,
      "pdfExport": true,
      "githubExport": true,
      "chatTokens": 4
@@ -55,7 +55,7 @@
     ],
    "config": { 
      "nbrProjects": 10,
-     "allowPages": ["dashboard","diagram","reports","requirements","tasks","logs","settings"],
+     "allowPages": ["overview","dashboard","diagram","reports","requirements","tasks","logs","settings"],
      "pdfExport": true,
      "githubExport": true,
      "chatTokens": 10
@@ -76,7 +76,7 @@
     ],
     "config": { 
      "nbrProjects": 50,
-     "allowPages": ["dashboard","diagram","reports","requirements","tasks","logs","settings"] ,
+     "allowPages": ["overview","dashboard","diagram","reports","requirements","tasks","logs","settings"] ,
      "pdfExport": true,
      "githubExport": true,
      "chatTokens": 50
