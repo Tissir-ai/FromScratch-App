@@ -35,6 +35,7 @@ import { ProjectProvider, useProject } from '@/context/ProjectContext';
 import TeamModal from "@/components/project/TeamModal";
 import ChatPanel from "@/components/project/ChatPanel";
 import CursorLayer from '@/components/project/cursor/CursorLayer';
+import UserHistorySheet from "@/components/project/UserHistorySheet";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -178,7 +179,7 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
       { icon: FileText, label: "Requirements", path: `/projects/${projectId}/requirements`, slug: 'requirements', requiredPermission: 'view_requirements' },
       { icon: CheckSquare, label: "Tasks & Sprints", path: `/projects/${projectId}/tasks`, slug: 'tasks', requiredPermission: 'view_tasks' },
       { icon: BarChart3, label: "Reports", path: `/projects/${projectId}/reports`, slug: 'reports', requiredPermission: 'view_reports' },
-      { icon: History, label: "System Logs", path: `/projects/${projectId}/logs`, slug: 'logs', requiredPermission: 'view_logs' },
+      { icon: History, label: "Activity Logs", path: `/projects/${projectId}/logs`, slug: 'logs', requiredPermission: 'manage_project' },
       { icon: Settings, label: "Settings", path: `/projects/${projectId}/settings`, slug: 'settings', requiredPermission: 'manage_project' },
     ];
 
@@ -207,7 +208,7 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
         case 'reports':
           return 'view_reports';
         case 'logs':
-          return 'view_logs';
+          return 'manage_project';
         case 'settings':
           return 'manage_project';
         case 'dashboard':
@@ -521,6 +522,7 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
                 <span className="text-xs font-medium">Invite Members</span>
               </button>
             )}
+            <UserHistorySheet projectId={projectId} />
 
             <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

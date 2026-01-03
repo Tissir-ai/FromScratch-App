@@ -11,6 +11,7 @@ from app.services.role_service import user_has_permission
 from app.domain.user import User
 from app.services.realtime import broadcast_crud_event
 from app.services.user_service import isAllowed
+from app.services.log_service import log_activity
 
 
 
@@ -25,6 +26,7 @@ async def create_requirement(project_id: str, payload: RequirementStructure, cur
     if not await isAllowed(current_user.get("id"), project_id, "create_requirements"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     requirement = await create(project_id, payload)
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Created requirement: {payload.title}")
     await broadcast_crud_event(str(project_id), "requirements", "create", "requirements", requirement.model_dump() if hasattr(requirement, "model_dump") else dict(requirement))
     return requirement
 
@@ -51,6 +53,7 @@ async def update_requirement(project_id: str, doc_id: str, payload: RequirementS
     updated = await update(project_id,payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Requirement not found")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Updated requirement: {payload.title}")
     await broadcast_crud_event(str(project_id), "requirements", "update", "requirements", updated if isinstance(updated, dict) else (updated.model_dump() if hasattr(updated, "model_dump") else {"id": str(doc_id)}))
     return updated
 
@@ -67,5 +70,6 @@ async def delete_requirement(project_id: str, doc_id: str, current_user: User = 
     deleted = await remove(project_id, doc_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Requirement not found")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Deleted a requirement")
     await broadcast_crud_event(str(project_id), "requirements", "delete", "requirements", {"id": str(doc_id)})
     return {"deleted": True}

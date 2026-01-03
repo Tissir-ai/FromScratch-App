@@ -5,7 +5,7 @@ import ProjectDetailsCard from "@/components/project/settings/ProjectDetailsCard
 import TeamsCard from "@/components/project/settings/TeamsCard";
 import MembersCard from "@/components/project/settings/MembersCard";
 import SettingsSidebar from "@/components/project/settings/SettingsSidebar";
-import { Member, Team, Role } from "@/components/project/settings/types";
+import { Member, Team, Role, NewMemberInput } from "@/components/project/settings/types";
 import {mockTeams, mockMembers} from "@/components/project/settings/mockData";
 interface SettingsPageProps { params: { projectId: string } | Promise<{ projectId: string }> }
 
@@ -68,10 +68,10 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     );
   };
 
-  const addMember = (input: Omit<Member, "id">) => {
+  const addMember = (input: NewMemberInput) => {
     const member: Member = {
       ...input,
-      permissions: input.permissions ?? { read: [], write: [] },
+      permissions: (input as Partial<Member>).permissions ?? { read: [], write: [] },
       id: crypto.randomUUID(),
     };
     setMembers((prev) => [...prev, member]);
