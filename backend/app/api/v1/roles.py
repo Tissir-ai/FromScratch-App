@@ -8,6 +8,7 @@ from app.services.project_service import get_by_id as get_project_by_id
 from app.domain.role import RoleDomain
 from app.services.user_service import isAllowed
 from app.services.realtime import broadcast_crud_event
+from app.services.log_service import log_activity
 
 
 router = APIRouter(prefix="/v1/roles", tags=["roles"])
@@ -27,6 +28,7 @@ async def create_role(project_id: str, payload: RoleDomain, current_user: object
         # If payload is not assignable, construct a new RoleDomain instance
         payload = RoleDomain(project_id=project_id, name=getattr(payload, "name", ""), permissions=getattr(payload, "permissions", []))
     role = await create(payload)
+    await log_activity(project_id, current_user.get("id"), f"Created role: {role.name}")
     await broadcast_crud_event(str(project_id), "roles", "create", "roles", role.model_dump() if hasattr(role, "model_dump") else dict(role))
     return role
 
@@ -50,6 +52,7 @@ async def update_role(project_id: str,  payload: RoleDomain, current_user: objec
     if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     role = await update(payload)
+    await log_activity(project_id, current_user.get("id"), f"Updated role: {role.name}")
     await broadcast_crud_event(str(project_id), "roles", "update", "roles", role.model_dump() if hasattr(role, "model_dump") else dict(role))
     return role
 
@@ -64,6 +67,7 @@ async def delete_role(project_id: str, doc_id: str,current_user: object = Depend
     deleted = await remove(doc_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Role not found")
+    await log_activity(project_id, current_user.get("id"), "Deleted a role")
     await broadcast_crud_event(str(project_id), "roles", "delete", "roles", {"id": str(doc_id)})
     return {"deleted": True}
 

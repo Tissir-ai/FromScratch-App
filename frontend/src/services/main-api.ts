@@ -1,4 +1,5 @@
 import { User } from '@/types/diagram.type';
+import { getCurrentUser } from './auth.service';
 
 // In Docker/production, frontend calls nginx at /api which proxies to backend
 // In local dev, it can call backend directly
@@ -23,13 +24,27 @@ interface RequestOptions extends RequestInit {
   user?: User | null; // Accept user from context (takes priority)
 }
 
+async function requireAuthenticatedUser(): Promise<User> {
+  try {
+    const current = await getCurrentUser();
+    const user = current?.user;
+    if (!user) {
+      throw new Error('Authentication required. Please log in.');
+    }
+    return user;
+  } catch (err) {
+    throw new Error('Authentication required. Please log in.');
+  }
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${MAIN_API_BASE_URL}${path}`;
 
-  // User can be passed directly or retrieved from module store
-  const user = options.user ?? _currentUser;
-  
+  const user = await requireAuthenticatedUser();
   if (!user) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
     throw new Error('Authentication required. Please log in.');
   }
 

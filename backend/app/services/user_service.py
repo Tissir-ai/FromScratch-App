@@ -13,6 +13,7 @@ from app.repositories.users_repo import (
     delete_user,
     set_role,
     get_user_by_info_id,
+    get_user_by_id,
     get_user_by_info_id_and_projectId,
     get_users_by_project
 )
@@ -101,7 +102,6 @@ async def invite_user(project_id: str, payload: object) -> dict:
         logger.error(f"Error sending invitation: {str(e)}")
         raise ValueError(f"Failed to send invitation: {str(e)}")
     
-
 async def list_all() -> List[User]:
     return await list_users()
 
@@ -132,7 +132,28 @@ async def get_members_info(project_id: str) -> List[dict]:
                 "team": "--" if role_label in ("guest", "owner") else role_name_lower,
             })
     return members_info
+async def get_member_info_by_id(user_id: str) -> dict | None:
+    user = await get_user_by_id(user_id)
+    if user:
+        role = await get_role_by_id(user.role_id)
+        role_name_lower = (role.name.lower() if role and getattr(role, "name", None) else "")
+        # guest if role is missing or has no permissions, owner if role name is 'owner', otherwise member
+        role_perms = getattr(role, "permissions", None)
+        if not role or not role_perms:
+            role_label = "guest"
+        elif role_name_lower == "owner":
+            role_label = "owner"
+        else:
+            role_label = "member"
 
+        return {
+                "id": str(user.id) or str(user._id),
+                "name": user.name,
+                "info_id": user.info_id,
+                "role": role_label,
+                "team": "--" if role_label in ("guest", "owner") else role_name_lower,
+            }
+    return None
 async def search_users_by_project(project_id: str, query: str, limit: int = 10) -> List[dict]:
     """Search users in a project by name or email."""
     from app.repositories.users_repo import search_users_by_project as repo_search_users
@@ -210,7 +231,6 @@ async def get_user_permission_by_info_id(project_id: str, info_id: str) -> dict 
     role = await get_role_by_id(user.role_id)
     if not role:
         return None
-    print("User role permissions:", role.permissions)
     return role.permissions
 
 

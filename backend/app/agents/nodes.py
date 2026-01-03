@@ -324,3 +324,116 @@ async def node_export(state: BlueprintState) -> BlueprintState:
     publish(f"run:{run_id}", "DONE: All content stored in state")
 
     return state
+
+
+# ------------------------------------------------------------
+# Node 5: Persist to Collections
+# ------------------------------------------------------------
+async def node_persist_to_collections(state: BlueprintState) -> BlueprintState:
+    """
+    Final node: Persists the generated data from state to the appropriate
+    domain collections (diagrams, requirements, project).
+    Uses existing service functions.
+    """
+    from app.services import diagram_service, requirement_service, project_service
+    from app.domain.diagram import DiagramStructure
+    from app.domain.requirement import RequirementStructure
+    from datetime import datetime
+    
+    run_id = state["run_id"]
+    project_id = state["project_id"]
+
+    publish(f"run:{run_id}", "Running: PersistToCollections")
+    print(f"[PERSIST_NODE] Starting persist for project_id={project_id}")
+
+    try:
+        # -----------------------------------------------------
+        # 1) Save Diagrams from diagrams_json_content
+        # -----------------------------------------------------
+        diagrams_json_str = state.get("diagrams_json_content")
+        if diagrams_json_str:
+            try:
+                diagrams_data = json.loads(diagrams_json_str)
+                diagrams_saved = 0
+                
+                # diagrams_data has keys: class, sequence, activity, usecase
+                for diagram_type, diagram_content in diagrams_data.items():
+                    if isinstance(diagram_content, dict) and "nodes" in diagram_content:
+                        diagram_struct = DiagramStructure(
+                            title=diagram_content.get("title", f"{diagram_type.capitalize()} Diagram"),
+                            type=diagram_content.get("type", diagram_type),
+                            nodes=diagram_content.get("nodes", []),
+                            edges=diagram_content.get("edges", []),
+                            created_at=datetime.utcnow(),
+                            updated_at=datetime.utcnow(),
+                        )
+                        await diagram_service.create(project_id, diagram_struct)
+                        diagrams_saved += 1
+                
+                print(f"[PERSIST_NODE] Saved {diagrams_saved} diagrams")
+            except json.JSONDecodeError as e:
+                print(f"[PERSIST_NODE] Failed to parse diagrams JSON: {e}")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving diagrams: {e}")
+
+        # -----------------------------------------------------
+        # 2) Save Requirements from requirements_content
+        # -----------------------------------------------------
+        requirements_md = state.get("requirements_content")
+        if requirements_md:
+            try:
+                # Save the full requirements document as a single requirement
+                requirement_struct = RequirementStructure(
+                    title="Project Requirements Document",
+                    category="Full Document",
+                    description="Auto-generated requirements from blueprint agent",
+                    content=requirements_md,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+                await requirement_service.create(project_id, requirement_struct)
+                print(f"[PERSIST_NODE] Saved requirements document")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving requirements: {e}")
+
+        # -----------------------------------------------------
+        # 3) Update Project with full_description (blueprint)
+        # -----------------------------------------------------
+        blueprint_md = state.get("blueprint_markdown")
+        if blueprint_md:
+            try:
+                await project_service.update(project_id, {
+                    "full_description": blueprint_md,
+                    "updated_at": datetime.utcnow(),
+                })
+                print(f"[PERSIST_NODE] Updated project full_description")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error updating project: {e}")
+
+        # -----------------------------------------------------
+        # 4) Save Sprint Plan as a requirement document
+        # -----------------------------------------------------
+        planner_md = state.get("planner_content")
+        if planner_md:
+            try:
+                plan_struct = RequirementStructure(
+                    title="Project Execution Plan",
+                    category="Sprint Planning",
+                    description="Auto-generated sprint plan from blueprint agent",
+                    content=planner_md,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+                await requirement_service.create(project_id, plan_struct)
+                print(f"[PERSIST_NODE] Saved sprint plan document")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving sprint plan: {e}")
+
+        publish(f"run:{run_id}", "PERSIST: Data saved to collections")
+        print(f"[PERSIST_NODE] Completed successfully")
+
+    except Exception as e:
+        print(f"[PERSIST_NODE] Critical error: {e}")
+        publish(f"run:{run_id}", f"PERSIST_ERROR: {str(e)}")
+
+    return state

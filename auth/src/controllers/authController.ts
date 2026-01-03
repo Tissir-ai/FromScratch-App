@@ -269,7 +269,7 @@ export async function searchUsersController(req: AuthenticatedRequest, res: Resp
     });
 
     // Format response
-    const results = users.map((user) => ({
+    const results = users.map((user: { id: any; email: any; firstName: any; lastName: any; }) => ({
       id: user.id,
       email: user.email,
       firstName: user.firstName,
