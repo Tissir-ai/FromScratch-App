@@ -33,7 +33,7 @@ def build_graph():
 
 
 async def run_blueprint_pipeline(
-    project_id: UUID,
+    project_id: str,
     run_id: UUID,
     idea: str,
 ) -> dict:

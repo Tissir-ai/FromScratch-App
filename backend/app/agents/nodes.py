@@ -18,7 +18,7 @@ from app.repositories import runs_repo  # MongoDB version
 # ------------------------------------------------------------
 # Helper: init state (utilise-le dans run_blueprint_pipeline)
 # ------------------------------------------------------------
-def make_initial_state(project_id: UUID, run_id: UUID, idea: str) -> BlueprintState:
+def make_initial_state(project_id: str, run_id: UUID, idea: str) -> BlueprintState:
     state: BlueprintState = {
         "project_id": project_id,
         "run_id": run_id,

@@ -113,6 +113,6 @@ export async function deleteProject(id: string, user: AuthUser): Promise<void> {
   await mainApi.delete<void>(`/v1/projects/${id}`, user)
 }
 
-export async function fetchProjectOwner(projectId: string, user: AuthUser): Promise<{ owner: string }> {
-  return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`, user)
+export async function fetchProjectOwner(projectId: string): Promise<{ owner: string }> {
+  return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`)
 }

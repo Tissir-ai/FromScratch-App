@@ -4,7 +4,7 @@ from uuid import UUID
 
 class BlueprintState(TypedDict):
     # Context
-    project_id: UUID
+    project_id: str  # MongoDB ObjectId as string
     run_id: UUID
     idea: str
 

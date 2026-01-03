@@ -108,7 +108,7 @@ services:
       - STORAGE_SECRET_KEY=minioadmin
       - STORAGE_BUCKET=fromscratch
       - MODEL_PROVIDER=nvidia
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
+      - NVIDIA_API_KEY=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
       - NVIDIA_MODEL=deepseek-ai/deepseek-r1
       - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     expose:
