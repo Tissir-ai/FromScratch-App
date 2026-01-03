@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     gmail_user: str | None = Field(None, alias="GMAIL_USER")
     gmail_app_password: str | None = Field(None, alias="GMAIL_APP_PASSWORD")
     
+    # Frontend URL for invitation links
+    frontend_url: str = Field("http://localhost:3000", alias="FRONTEND_URL")
+    
     model_provider: str = Field("openai", alias="MODEL_PROVIDER")
     #openai_api_key: str | None = Field(None, alias="OPENAI_API_KEY")
     #litellm_model: str = Field("gpt-4o-mini", alias="LITELLM_MODEL")

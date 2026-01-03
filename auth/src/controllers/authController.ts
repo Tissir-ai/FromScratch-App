@@ -223,3 +223,62 @@ export async function changePasswordController(req: AuthenticatedRequest, res: R
     next(err);
   }
 }
+
+export async function searchUsersController(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const query = req.query.q as string | undefined;
+    
+    if (!query || query.trim().length < 2) {
+      res.status(200).json([]);
+      return;
+    }
+
+    const { prisma } = await import('../db/client.js');
+    
+    // Search users by firstName, lastName, or email (case-insensitive)
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            firstName: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            lastName: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            email: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+      },
+      take: 15,
+    });
+
+    // Format response
+    const results = users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: `${user.firstName} ${user.lastName}`.trim(),
+    }));
+
+    res.status(200).json(results);
+  } catch (err) {
+    next(err);
+  }
+}

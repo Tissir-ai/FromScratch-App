@@ -87,7 +87,9 @@ async def create_project_with_roles(payload: object, current_user: object) -> Pr
             "create_tasks",
             "edit_tasks",
         ],
-        "Guest": [],
+        "Guest": [
+            "view_overview"
+            ],
     }
 
     owner_role = None

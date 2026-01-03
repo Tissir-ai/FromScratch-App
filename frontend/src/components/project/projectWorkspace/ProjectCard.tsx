@@ -102,6 +102,8 @@ export function ProjectCard({ project, isOwner, onViewDetails, onOpen, onSetting
                 >
                   View details
                 </button>
+                    {isOwner ? (
+                      <>
                 <button
                   className="text-sm text-left px-2 py-2 hover:bg-muted rounded-md"
                   onClick={() => {
@@ -112,8 +114,6 @@ export function ProjectCard({ project, isOwner, onViewDetails, onOpen, onSetting
                   Settings
                 </button>
                 <Separator className="my-1" />
-
-                {isOwner ? (
                   <button
                     className="text-sm text-left px-2 py-2 hover:bg-muted rounded-md text-red-600"
                     onClick={() => {
@@ -123,6 +123,7 @@ export function ProjectCard({ project, isOwner, onViewDetails, onOpen, onSetting
                   >
                     Delete project
                   </button>
+                  </>
                 ) : (
                   <div className="text-sm px-2 py-2 text-muted-foreground">Only owner can delete</div>
                 )}
