@@ -21,7 +21,7 @@ async def create_diagram(project_id: str, payload: DiagramStructure, current_use
     if not await isAllowed(current_user.get("id"), project_id, "create_diagrams"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     diagram = await create(project_id, payload)
-    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Created diagram: {payload.name}")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name','unknown user')} Created diagram: {payload.title}")
     await broadcast_crud_event(str(project_id), "diagrams", "create", "diagrams", diagram.model_dump() if hasattr(diagram, "model_dump") else dict(diagram))
     return diagram
 
