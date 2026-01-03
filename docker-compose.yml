@@ -141,7 +141,7 @@ services:
       - APP_ENV=production
       - SECRET_KEY=your-backend-secret-key-min-32-characters-here
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
-      - MONGODB_URI=mongodb://admin:admin@mongo:27017/fromscratch?authSource=admin
+      - MONGODB_URI=mongodb://admin:admin2025@mongo:27017/fromscratch?authSource=admin
       - REDIS_URL=redis://redis:6379/0
       - STORAGE_ENDPOINT=http://minio:9000
       - STORAGE_ACCESS_KEY=minioadmin
@@ -165,7 +165,7 @@ services:
     restart: unless-stopped
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin2025
       - MONGO_INITDB_DATABASE=fromscratch
     volumes:
       - mongo_data:/data/db
