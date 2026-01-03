@@ -116,6 +116,26 @@ export async function deleteProject(id: string): Promise<void> {
   await mainApi.delete<void>(`/v1/projects/${id}`)
 }
 
-export async function fetchProjectOwner(projectId: string): Promise<{ owner: string }> {
-  return mainApi.get<{ owner: string }>(`/v1/projects/${projectId}/owner`)
+export async function fetchProjectOwner(projectId: string): Promise<string> {
+  return mainApi.get<string>(`/v1/projects/${projectId}/owner`)
+}
+
+export async function inviteUserToProject(projectId: string, infoId :string , email: string): Promise<import('@/types/project.type').InvitationResponse> {
+  return mainApi.post<import('@/types/project.type').InvitationResponse>(`/v1/projects/${projectId}/user/invite`, { "info_id": infoId, "email" : email })
+}
+
+export async function fetchProjectInvitations(projectId: string): Promise<import('@/types/project.type').ProjectInvitation[]> {
+  return mainApi.get<import('@/types/project.type').ProjectInvitation[]>(`/v1/projects/${projectId}/invitations`)
+}
+
+export async function cancelInvitation(invitationId: string): Promise<{ message: string; status: string }> {
+  return mainApi.delete<{ message: string; status: string }>(`/v1/projects/invitations/${invitationId}`)
+}
+
+export async function resendInvitation(invitationId: string): Promise<import('@/types/project.type').InvitationResponse> {
+  return mainApi.post<import('@/types/project.type').InvitationResponse>(`/v1/projects/invitations/${invitationId}/resend`)
+}
+
+export async function acceptProjectInvitation(token: string): Promise<import('@/types/project.type').AcceptInvitationResponse> {
+  return mainApi.post<import('@/types/project.type').AcceptInvitationResponse>('/v1/projects/invitations/accept', { token })
 }

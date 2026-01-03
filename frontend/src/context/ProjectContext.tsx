@@ -7,11 +7,14 @@ import type { SubscriptionPlan } from '@/types/plan.type';
 
 
 interface ProjectContextValue {
+  ownerId: string | null;
   ownerPlan: SubscriptionPlan | null;
   memberPermissions: string[];
   loading: boolean;
   error: string | null;
   hasPermission: (perm: string) => boolean;
+  allowPages: string[] | null;
+  isPageAllowed: (slug: string) => boolean;
   refresh: () => Promise<void> | void;
 }
 
@@ -32,7 +35,7 @@ export function ProjectProvider({ projectId, memberId, children }: { projectId: 
     setOwnerPlan(null);
     try {
       const res = await fetchProjectOwner(projectId);
-      const owner = res?.owner ?? null;
+      const owner = res ?? null;
       setOwnerId(owner);
       if (owner) {
         const plan = await getSubscriptionPlanByUserId(owner);
@@ -40,7 +43,7 @@ export function ProjectProvider({ projectId, memberId, children }: { projectId: 
       }
       const permissions = await fetchMemberPermissions(projectId, memberId);
       console.log('Fetched member permissions:', permissions);
-      // Ensure permissions is normalized to a flat string[] before setting state
+      // Ensure permissions is normalized to a flat string[] before setting state 
       const normalizedPermissions: string[] = Array.isArray(permissions)
         ? (permissions as any[]).flat().map((p) => String(p))
         : [];
@@ -61,12 +64,26 @@ export function ProjectProvider({ projectId, memberId, children }: { projectId: 
     return memberPermissions.includes(perm);
   }, [memberPermissions]);
 
+  const allowPages = ownerPlan?.config?.allowPages ?? null;
+  console.log(ownerPlan);
+  const isPageAllowed = useCallback((slug: string) => {
+    if (!slug) return false;
+    // If allowPages is not defined, treat as all pages allowed
+    if (allowPages === null || allowPages === undefined) return true;
+    // If allowPages is a boolean and true, allow all; if false, block all
+    if (typeof allowPages === 'boolean') return allowPages;
+    return allowPages.includes(slug);
+  }, [allowPages]);
+
   const value: ProjectContextValue = {
+    ownerId,
     ownerPlan,
     memberPermissions,
     loading,
     error,
     hasPermission,
+    allowPages: Array.isArray(allowPages) ? allowPages : null,
+    isPageAllowed,
     refresh,
   };
 

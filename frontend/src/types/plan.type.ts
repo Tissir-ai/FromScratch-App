@@ -9,7 +9,7 @@ export interface SubscriptionPlan {
   isPopular: boolean;
   config?: {
     nbrProjects: number; 
-    allowPages: string[];
+    allowPages: string[] | boolean;
     pdfExport: boolean;
     githubExport: boolean;
     chatTokens: number;

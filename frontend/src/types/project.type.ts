@@ -37,3 +37,27 @@ export interface CreateProjectPayload {
   name: string
   description?: string
 }
+
+export interface ProjectInvitation {
+  id: string
+  email: string
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled'
+  created_at: string
+  expires_at: string
+}
+
+export interface InvitationResponse {
+  message: string
+  status: string
+  email?: string
+  expires_at?: string
+}
+
+export interface AcceptInvitationResponse {
+  message: string
+  status: string
+  project_id: string
+  project_name: string
+  user_id: string
+  role: string
+}

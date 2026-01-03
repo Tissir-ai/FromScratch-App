@@ -116,7 +116,8 @@ export function ProjectTable({ projects, currentUserId, onViewDetails, onOpen, o
                       View
                       <ChevronRight className="h-4 w-4" />
                     </Button>
-
+                                 {isOwner && (
+                                  <>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className="p-1 rounded-md hover:bg-muted/60">
@@ -126,6 +127,7 @@ export function ProjectTable({ projects, currentUserId, onViewDetails, onOpen, o
 
                       <PopoverContent className="w-40">
                         <div className="flex flex-col">
+
                           <button
                             className="text-sm text-left px-2 py-2 hover:bg-muted rounded-md"
                             onClick={() => { (onSettings ?? onOpen)(project); }}
@@ -134,20 +136,18 @@ export function ProjectTable({ projects, currentUserId, onViewDetails, onOpen, o
                           </button>
 
                           <Separator className="my-1" />
-
-                          {isOwner ? (
                             <button
                               className="text-sm text-left px-2 py-2 hover:bg-muted rounded-md text-red-600"
                               onClick={() => setDeletingId(project.id)}
                             >
                               Delete project
                             </button>
-                          ) : (
-                            <div className="text-sm px-2 py-2 text-muted-foreground">Only owner can delete</div>
-                          )}
+
                         </div>
                       </PopoverContent>
                     </Popover>
+                    </>
+                                 )}
                   </div>
                 </TableCell>
               </TableRow>

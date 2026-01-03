@@ -1,13 +1,20 @@
 from typing import List
 from app.domain.role import RoleDomain as RoleDomainModel
-
+from beanie import PydanticObjectId
 
 async def create_role(role: RoleDomainModel) -> RoleDomainModel:
     return await role.insert()
 
 
-async def get_roles_by_project(project_id: str) -> List[RoleDomainModel]:
-    return await RoleDomainModel.find(RoleDomainModel.project_id == project_id).to_list()
+async def get_roles_by_project(project_id: str | PydanticObjectId) -> List[RoleDomainModel]:
+    try:
+        pid = (
+            PydanticObjectId(project_id) if isinstance(project_id, str) else project_id
+        )
+    except Exception:
+        print("Invalid project id:", pid)
+        return None
+    return await RoleDomainModel.find(RoleDomainModel.project_id == pid).to_list()
 
 
 async def get_role_by_id(doc_id: str ) -> RoleDomainModel | None:
