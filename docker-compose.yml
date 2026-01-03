@@ -224,10 +224,7 @@ services:
     container_name: fromscratch-stripe-cli
     restart: unless-stopped
     env_file:
-      - .env
-    environment:
-      # Provide your test secret key in .env as STRIPE_SECRET_KEY
-      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+      - ./auth/.env
     # forward Stripe events to the api service inside this compose network
     command: ["listen", "--forward-to", "http://auth:4000/api/payments/webhook", "--print-secret"]
     depends_on:
