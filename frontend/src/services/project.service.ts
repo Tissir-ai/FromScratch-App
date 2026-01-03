@@ -1,6 +1,6 @@
 import { mainApi } from './main-api'
 import type { CreateProjectPayload, Project , OverviewData, UpdateProjectPayload } from '@/types/project.type'
-
+import type {AuthUser} from "@/types/user.type";
 export interface RunStatus {
   run_id: string
   project_id: string
