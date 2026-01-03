@@ -8,6 +8,7 @@ from app.agents.state import BlueprintState
 from app.agents.requirements_agent import generate_requirements
 from app.agents.diagram_agent import generate_diagrams
 from app.agents.planner_agent import generate_plan_json
+from app.agents.export_agent import generate_export_json
 from app.agents.metadata_agent import generate_project_metadata
 # from app.agents.export_agent import export_markdown  # COMMENTED: No longer using MinIO
 # from app.agents.tools.db_tools import persist_artifact  # DEPRECATED: MongoDB async
@@ -40,9 +41,9 @@ def make_initial_state(project_id: str, run_id: UUID, idea: str) -> BlueprintSta
         "requirements_content": None,
         "diagrams_content": None,
         "diagrams_json_content": None,
-        "planner_content": None,
         "planner_json_content": None,
         "export_content": None,
+        "export_json_content": None,
         
         # MinIO URIs (COMMENTED - not used anymore)
         # "requirements_uri": None,
@@ -147,9 +148,9 @@ async def node_requirements(state: BlueprintState) -> BlueprintState:
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
         "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
@@ -227,9 +228,9 @@ These diagrams can be rendered directly in the frontend using React Flow.
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
         "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
@@ -260,34 +261,17 @@ async def node_planner(state: BlueprintState) -> BlueprintState:
             lines = lines[:-1]
         cleaned_json = "\n".join(lines).strip()
 
-    # 3) Export (MinIO/S3) - COMMENTED: stockage direct
-    # uri = await export_markdown(
-    #     project_id=project_id,
-    #     content=plan_md,
-    # )
+    # 3) Update state - Stockage JSON uniquement (optimisation tokens)
+    state["planner_json_content"] = cleaned_json
 
-    # 4) Persist - COMMENTED: optionnel
-    # persist_artifact(
-    #     session=session,
-    #     project_id=project_id,
-    #     kind="plan",
-    #     content=plan_md,
-    #     storage_uri=None,
-    # )
-
-    # 5) Update state - Stockage JSON uniquement (optimisation tokens)
-    state["sprint_planning"] = cleaned_json  # JSON pour compatibilité
-    state["planner_content"] = cleaned_json  # JSON stocké dans planner_content
-    state["planner_json_content"] = cleaned_json  # 🆕 JSON structuré
-
-    # 6) Sauvegarder le state complet en JSON dans la DB (MongoDB async)
+    # 4) Sauvegarder le state complet en JSON dans la DB (MongoDB async)
     state_json = {
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
         "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
@@ -300,10 +284,11 @@ async def node_planner(state: BlueprintState) -> BlueprintState:
 # ------------------------------------------------------------
 async def node_export(state: BlueprintState) -> BlueprintState:
     run_id = state["run_id"]
+    idea = state["idea"]
 
     publish(f"run:{run_id}", "Running: ExportAgent")
 
-    # Assemble markdown final pour la documentation complète
+    # 1) Assemble markdown final pour la documentation complète
     state["blueprint_markdown"] = "\n\n".join(
         filter(
             None,
@@ -315,24 +300,37 @@ async def node_export(state: BlueprintState) -> BlueprintState:
         )
     )
     
-    # Stocke aussi le contenu final dans export_content
+    # 2) Stocke aussi le contenu final dans export_content
     state["export_content"] = state["blueprint_markdown"]
 
-    # Result URIs - COMMENTED: plus besoin de MinIO
-    # state["result_uri"] = (
-    #     state.get("plan_uri")
-    #     or state.get("requirements_uri")
-    #     or state.get("diagrams_uri")
-    # )
+    # 3) Génère le JSON structuré pour l'export (document + github_export)
+    export_json_str = await generate_export_json(
+        idea=idea,
+        requirements=state.get("requirements_content") or "",
+        diagrams_json=state.get("diagrams_json_content") or "",
+        planner_json=state.get("planner_json_content") or "",
+    )
 
-    # Sauvegarder le state final complet en JSON dans la DB (MongoDB async)
+    # 4) Clean JSON if wrapped in markdown code blocks
+    cleaned_json = export_json_str.strip()
+    if cleaned_json.startswith("```"):
+        lines = cleaned_json.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned_json = "\n".join(lines).strip()
+
+    state["export_json_content"] = cleaned_json
+
+    # 5) Sauvegarder le state final complet en JSON dans la DB (MongoDB async)
     state_json = {
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
         "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)

@@ -150,3 +150,171 @@ async def export_markdown(project_id: int, content: str) -> str:
     """
     # return put_text(f"projects/{project_id}/exports", content)
     return ""  # No longer using MinIO
+
+
+# JSON structured output for export
+EXPORT_JSON_OUTPUT_STRUCTURE = """{
+  "document": {
+    "title": "E-Commerce Platform",
+    "description": "Complete project blueprint for building a modern e-commerce platform",
+    "overview": "This project aims to create a scalable, secure e-commerce platform with modern features including user authentication, product catalog, shopping cart, and payment processing.",
+    "goals": [
+      {
+        "label": "User Experience",
+        "description": "Create an intuitive and responsive shopping experience across all devices"
+      },
+      {
+        "label": "Scalability",
+        "description": "Build infrastructure that can handle 10,000+ concurrent users"
+      },
+      {
+        "label": "Security",
+        "description": "Implement industry-standard security practices for payment and data protection"
+      }
+    ],
+    "scope_in": [
+      {
+        "label": "User Authentication",
+        "description": "Registration, login, OAuth integration (Google, Facebook)"
+      },
+      {
+        "label": "Product Catalog",
+        "description": "Product listing, search, filtering, and detailed product pages"
+      },
+      {
+        "label": "Shopping Cart",
+        "description": "Add to cart, update quantities, checkout flow"
+      },
+      {
+        "label": "Payment Processing",
+        "description": "Integration with Stripe for credit card payments"
+      }
+    ],
+    "scope_out": [
+      {
+        "label": "Mobile Apps",
+        "description": "Native iOS/Android apps are not included in this phase"
+      },
+      {
+        "label": "Inventory Management",
+        "description": "Warehouse and stock management will be added in Phase 2"
+      },
+      {
+        "label": "Multi-vendor Support",
+        "description": "Marketplace features for multiple sellers not included"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Technical Architecture",
+        "content": "The system follows a microservices architecture with separate services for authentication, catalog, cart, and payments.",
+        "items": [
+          {
+            "label": "Frontend",
+            "description": "React with Next.js for server-side rendering and optimal performance"
+          },
+          {
+            "label": "Backend",
+            "description": "Node.js with Express for API gateway, Python FastAPI for microservices"
+          },
+          {
+            "label": "Database",
+            "description": "PostgreSQL for relational data, Redis for caching and sessions"
+          }
+        ]
+      },
+      {
+        "title": "Security Considerations",
+        "content": "Security is a top priority with multiple layers of protection.",
+        "items": [
+          {
+            "label": "Authentication",
+            "description": "JWT tokens with refresh mechanism, OAuth 2.0 for social login"
+          },
+          {
+            "label": "Data Protection",
+            "description": "HTTPS only, encrypted database fields, GDPR compliance"
+          },
+          {
+            "label": "Payment Security",
+            "description": "PCI DSS compliant via Stripe, no card data stored locally"
+          }
+        ]
+      }
+    ]
+  },
+  "github_export": [
+    {
+      "repo_name": "ecommerce-frontend",
+      "branch": "main",
+      "content": "# E-Commerce Frontend\\n\\n## Setup\\n```bash\\nnpm install\\nnpm run dev\\n```\\n\\n## Dependencies\\n- Next.js 14\\n- React 18\\n- TailwindCSS\\n- Axios"
+    },
+    {
+      "repo_name": "ecommerce-backend",
+      "branch": "main",
+      "content": "# E-Commerce Backend\\n\\n## Setup\\n```bash\\npip install -r requirements.txt\\nuvicorn main:app --reload\\n```\\n\\n## Dependencies\\n- FastAPI\\n- PostgreSQL\\n- Redis\\n- Stripe SDK"
+    }
+  ]
+}"""
+
+
+async def generate_export_json(idea: str, requirements: str, diagrams_json: str, planner_json: str) -> str:
+    """
+    Generates structured JSON output for project export documentation.
+    Returns JSON string with document structure and GitHub export templates.
+    """
+    prompt = f"""You are a world-class Technical Documentation Specialist and Project Architect.
+
+Your task is to analyze the project artifacts below and generate a comprehensive export document in JSON format.
+
+## PROJECT IDEA:
+
+{idea}
+
+## REQUIREMENTS (Text):
+
+{requirements}
+
+## PLANNER DATA (JSON):
+
+{planner_json}
+
+---
+
+## YOUR TASK:
+
+Generate a complete project export document as a JSON object with the following structure:
+
+1. **document**: Main documentation structure
+   - **title**: Project name (concise, professional)
+   - **description**: One-sentence project description
+   - **overview**: 2-3 paragraph executive summary
+   - **goals**: List of 3-5 key project goals with labels and descriptions
+   - **scope_in**: List of features/requirements IN SCOPE (5-10 items)
+   - **scope_out**: List of features/requirements OUT OF SCOPE (3-5 items)
+   - **sections**: Additional documentation sections (Technical Architecture, Security, Deployment, etc.)
+
+2. **github_export**: GitHub repository templates (1-3 repos)
+   - **repo_name**: Repository name
+   - **branch**: Default branch (usually "main")
+   - **content**: README.md content with setup instructions, dependencies, and project structure
+
+## GUIDELINES:
+
+- Be SPECIFIC and ACTIONABLE in all descriptions
+- Extract goals from requirements and planner data
+- Define clear scope boundaries (what's included vs. excluded)
+- Create realistic GitHub README templates with actual setup commands
+- Use professional, technical language
+- Ensure consistency with provided artifacts
+
+## OUTPUT FORMAT:
+
+Return ONLY valid JSON - no markdown, no code blocks, no explanations.
+
+EXAMPLE STRUCTURE:
+{EXPORT_JSON_OUTPUT_STRUCTURE}
+
+Now generate the complete export document JSON for the project above. Be thorough, professional, and aligned with the provided artifacts."""
+    
+    return await llm_call(prompt)
