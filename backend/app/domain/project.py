@@ -18,6 +18,7 @@ class Project(Document):
     diagrams_id: PydanticObjectId | None = None
     requirements_id: PydanticObjectId | None = None
     logs_id: PydanticObjectId | None = None
+    planners_id: PydanticObjectId | None = None
     chats_id: PydanticObjectId | None = None
     class Settings:
         name = "projects"
