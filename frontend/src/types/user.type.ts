@@ -6,3 +6,11 @@ export interface AuthUser {
   lastName: string;
 }
 
+export interface UserSearchResult {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+}
+

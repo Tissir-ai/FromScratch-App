@@ -25,6 +25,7 @@ import {
   ChevronRight,
   MoreVertical,
   LogOut as ExitIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";  
@@ -71,6 +72,18 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
   const searchParams = useSearchParams();
   const docParam = searchParams?.get?.('doc') || null;
 
+  const normalizePageSlug = useCallback((slug: string) => {
+    const map: Record<string, string> = {
+      diagram: 'diagrams',
+      diagrams: 'diagrams',
+      report: 'reports',
+      log: 'logs',
+      'tasks&sprints': 'tasks',
+      task: 'tasks',
+    };
+    return map[slug] ?? slug;
+  }, []);
+
   const pageSlug = useMemo(() => {
     if (!pathname) return 'dashboard';
     const segments = pathname.split('/').filter(Boolean);
@@ -79,8 +92,8 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
     if (!tail || tail === projectId) {
       return 'dashboard';
     }
-    return tail;
-  }, [pathname, projectId]);
+    return normalizePageSlug(tail);
+  }, [pathname, projectId, normalizePageSlug]);
 
   // Decide the realtime room id: when viewing diagrams & a doc query is present, use doc as the room id
   const pageRoomId = useMemo(() => {
@@ -152,22 +165,32 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
   }, [projectId, pageRoomId, user?.id]);
 
   const projectCtx = useProject();
+  const isOwner = useMemo(() => {
+    const ownerId = projectCtx?.ownerId;
+    const userId = user?.id;
+    if (!ownerId || !userId) return false;
+    return String(ownerId) === String(userId);
+  }, [projectCtx?.ownerId, user?.id]);
     const navItems = [
-      { icon: LayoutDashboard, label: "Dashboard", path: `/projects/${projectId}` , requiredPermission: 'view_dashboard'},
-      { icon: Target, label: "Overview", path: `/projects/${projectId}/overview`, requiredPermission: 'view_overview' },
-      { icon: GitBranch, label: "Diagrams", path: `/projects/${projectId}/diagrams`, requiredPermission: 'view_diagrams' },
-      { icon: FileText, label: "Requirements", path: `/projects/${projectId}/requirements` , requiredPermission: 'view_requirements'},
-      { icon: CheckSquare, label: "Tasks & Sprints", path: `/projects/${projectId}/tasks` , requiredPermission: 'view_tasks'},
-      { icon: BarChart3, label: "Reports", path: `/projects/${projectId}/reports`, requiredPermission: 'view_reports' },
-      { icon: History, label: "System Logs", path: `/projects/${projectId}/logs` , requiredPermission: 'view_logs' },
-      { icon: Settings, label: "Settings", path: `/projects/${projectId}/settings` , requiredPermission: 'manage_project' },
+      { icon: LayoutDashboard, label: "Dashboard", path: `/projects/${projectId}`, slug: 'dashboard', requiredPermission: 'view_dashboard' },
+      { icon: Target, label: "Overview", path: `/projects/${projectId}/overview`, slug: 'overview', requiredPermission: 'view_overview' },
+      { icon: GitBranch, label: "Diagrams", path: `/projects/${projectId}/diagrams`, slug: 'diagrams', requiredPermission: 'view_diagrams' },
+      { icon: FileText, label: "Requirements", path: `/projects/${projectId}/requirements`, slug: 'requirements', requiredPermission: 'view_requirements' },
+      { icon: CheckSquare, label: "Tasks & Sprints", path: `/projects/${projectId}/tasks`, slug: 'tasks', requiredPermission: 'view_tasks' },
+      { icon: BarChart3, label: "Reports", path: `/projects/${projectId}/reports`, slug: 'reports', requiredPermission: 'view_reports' },
+      { icon: History, label: "System Logs", path: `/projects/${projectId}/logs`, slug: 'logs', requiredPermission: 'view_logs' },
+      { icon: Settings, label: "Settings", path: `/projects/${projectId}/settings`, slug: 'settings', requiredPermission: 'manage_project' },
     ];
 
     // Only render links the user can access
     const allowedNavItems = useMemo(() => {
       if (!projectCtx?.hasPermission) return navItems;
-      return navItems.filter((item) => !item.requiredPermission || projectCtx.hasPermission(item.requiredPermission));
-    }, [navItems, projectCtx?.hasPermission]);
+      return navItems.filter((item) => {
+        const allowedByPerm = !item.requiredPermission || projectCtx.hasPermission(item.requiredPermission);
+        const allowedByPlan = projectCtx?.isPageAllowed ? projectCtx.isPageAllowed(normalizePageSlug(item.slug)) : true;
+        return allowedByPerm && allowedByPlan;
+      });
+    }, [navItems, projectCtx?.hasPermission, projectCtx?.isPageAllowed, normalizePageSlug]);
 
     // Map current page to required permission
     const pageRequiredPermission = useMemo(() => {
@@ -193,10 +216,15 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
       }
     }, [pageSlug]);
 
+    const pageAllowedByPlan = useMemo(() => {
+      if (!projectCtx?.isPageAllowed) return true;
+      return projectCtx.isPageAllowed(pageSlug);
+    }, [projectCtx?.isPageAllowed, pageSlug]);
+
     const canAccessPage = useMemo(() => {
       if (!projectCtx?.hasPermission) return true; // fallback if context missing
-      return projectCtx.hasPermission(pageRequiredPermission);
-    }, [projectCtx?.hasPermission, pageRequiredPermission]);
+      return projectCtx.hasPermission(pageRequiredPermission) && pageAllowedByPlan;
+    }, [projectCtx?.hasPermission, pageRequiredPermission, pageAllowedByPlan]);
   
   const sendCursor = (x: number, y: number) => {
     const ws = socketRef.current;
@@ -259,6 +287,24 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
     );
   }
 
+  // If plan does not allow this page, show upgrade prompt
+  if (projectCtx && projectCtx.isPageAllowed && !projectCtx.isPageAllowed(pageSlug)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-center px-6">
+        <div className="flex items-center gap-2 text-2xl font-semibold mb-2">
+          <AlertTriangle className="h-6 w-6 text-amber-500" />
+          Upgrade required
+        </div>
+        <p className="text-muted-foreground max-w-md mb-4">
+          Your current plan does not include access to this page. Please upgrade your subscription to unlock it.
+        </p>
+        <Button onClick={() => router.push('/profil?tab=subscription')}>
+          View plans
+        </Button>
+      </div>
+    );
+  }
+
   // If the user lacks permission for this page, show an access denied screen
   if (!canAccessPage) {
     return (
@@ -270,9 +316,10 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
   }
 
   // Render export button only from inside the ProjectProvider so `useProject` has a provider above it
-  const OwnerExportButton: React.FC = () => {
+  const OwnerExportButton: React.FC<{ isOwner: boolean }> = ({ isOwner }) => {
     const pctx = useProject();
     const ownerPlanLocal = pctx?.ownerPlan;
+    if (!isOwner) return null;
     if (!ownerPlanLocal?.config?.githubExport) return null;
     return (
       <Button variant="outline" size="sm" onClick={handleExport} className="gap-2 hidden sm:flex">
@@ -460,18 +507,20 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
           </div>
           
           <div className="flex items-center gap-3">
-            <OwnerExportButton />
-            <button
-              type="button"
-              onClick={() => setIsTeamModalOpen(true)}
-              className="group inline-flex items-center rounded-full border bg-background px-3 py-1.5 shadow-sm hover:bg-accent transition-colors"
-            >
-              <div className="flex -space-x-2 mr-2">
-                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-primary-foreground ring-2 ring-background">FS</div>
-                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] ring-2 ring-background">+</div>
-              </div>
-              <span className="text-xs font-medium">Share</span>
-            </button>
+            <OwnerExportButton isOwner={isOwner} />
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => setIsTeamModalOpen(true)}
+                className="group inline-flex items-center rounded-full border bg-background px-3 py-1.5 shadow-sm hover:bg-accent transition-colors"
+              >
+                <div className="flex -space-x-2 mr-2">
+                  <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-primary-foreground ring-2 ring-background">FS</div>
+                  <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] ring-2 ring-background">+</div>
+                </div>
+                <span className="text-xs font-medium">Invite Members</span>
+              </button>
+            )}
 
             <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -505,7 +554,9 @@ const PageLayoutInner = ({ children, title, projectId, user, logout }: Dashboard
       </div>
 
       {/* Team Modal */}
-      <TeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
+      {isOwner && (
+        <TeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} projectId={projectId} />
+      )}
     </div>
     </RealtimeProvider>
   );

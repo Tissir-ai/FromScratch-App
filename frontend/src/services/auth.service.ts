@@ -47,6 +47,16 @@ export async function getCurrentUser(): Promise<MeResponse> {
 
 export async function logout(): Promise<void> {
   await authApi.post('/auth/logout');
+<<<<<<< HEAD
+=======
+}
+
+export async function searchUsers(query: string): Promise<import('@/types/user.type').UserSearchResult[]> {
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
+  return authApi.get<import('@/types/user.type').UserSearchResult[]>(`/auth/users/search?q=${encodeURIComponent(query)}`);
+>>>>>>> 1eabb61479a1b33b4dc7d7aab9b2a32802ed394d
 }
 
 export function getGoogleLoginUrl(returnTo?: string, errorRedirect?: string): string {
@@ -82,5 +92,5 @@ export async function resetPassword(token: string, newPassword: string): Promise
 }
 
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
-  await authApi.post('/change-password', { oldPassword, newPassword });
+  await authApi.post('/auth/change-password', { oldPassword, newPassword });
 }
