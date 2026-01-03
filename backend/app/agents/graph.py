@@ -10,6 +10,7 @@ from app.agents.nodes import (
     node_diagrams,
     node_planner,
     node_export,
+    node_persist_to_collections,
     make_initial_state,
 )
 
@@ -21,19 +22,21 @@ def build_graph():
     g.add_node("DIAGRAMS", node_diagrams)
     g.add_node("PLANNER", node_planner)
     g.add_node("EXPORT", node_export)
+    g.add_node("PERSIST", node_persist_to_collections)
 
     g.set_entry_point("METADATA")
     g.add_edge("METADATA", "REQUIREMENTS")
     g.add_edge("REQUIREMENTS", "DIAGRAMS")
     g.add_edge("DIAGRAMS", "PLANNER")
     g.add_edge("PLANNER", "EXPORT")
-    g.add_edge("EXPORT", END)
+    g.add_edge("EXPORT", "PERSIST")
+    g.add_edge("PERSIST", END)
 
     return g.compile()
 
 
 async def run_blueprint_pipeline(
-    project_id: UUID,
+    project_id: str,
     run_id: UUID,
     idea: str,
 ) -> dict:
@@ -55,5 +58,6 @@ async def run_blueprint_pipeline(
         "requirements": final_state.get("requirements_content"),
         "diagrams": final_state.get("diagrams_content"),
         "diagrams_json": final_state.get("diagrams_json_content"),
-        "plan": final_state.get("planner_content"),
+        "plan_json": final_state.get("planner_json_content"),
+        "export_json": final_state.get("export_json_content"),
     }

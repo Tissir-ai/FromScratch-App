@@ -158,6 +158,8 @@ async def update(project_id: str, data: dict) -> Project | None:
     return await update_project(project_id, data)
 
 
+
+
 async def delete(project: Project) -> Project | None:
     if project.chats_id is not None:
         await delete_chat(project.chats_id) 
@@ -233,3 +235,22 @@ async def load_overview(project: Project) -> dict:
             "members": [],
             "project_created_at": project.created_at,
         }
+
+async def update_project_metadata(project_id: str, name: str, description: str) -> Project | None:
+    """
+    Update project name and description.
+    Used by the metadata agent to update auto-generated projects.
+
+    Args:
+        project_id: UUID of the project to update
+        name: New project name
+        description: New project description
+
+    Returns:
+        Updated project or None if not found
+    """
+    return await update_project(project_id, {
+        "name": name,
+        "description": description,
+    })
+

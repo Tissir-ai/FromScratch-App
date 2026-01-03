@@ -7,7 +7,8 @@ from uuid import UUID
 from app.agents.state import BlueprintState
 from app.agents.requirements_agent import generate_requirements
 from app.agents.diagram_agent import generate_diagrams
-from app.agents.planner_agent import generate_plan
+from app.agents.planner_agent import generate_plan_json
+from app.agents.export_agent import generate_export_json
 from app.agents.metadata_agent import generate_project_metadata
 # from app.agents.export_agent import export_markdown  # COMMENTED: No longer using MinIO
 # from app.agents.tools.db_tools import persist_artifact  # DEPRECATED: MongoDB async
@@ -18,7 +19,7 @@ from app.repositories import runs_repo  # MongoDB version
 # ------------------------------------------------------------
 # Helper: init state (utilise-le dans run_blueprint_pipeline)
 # ------------------------------------------------------------
-def make_initial_state(project_id: UUID, run_id: UUID, idea: str) -> BlueprintState:
+def make_initial_state(project_id: str, run_id: UUID, idea: str) -> BlueprintState:
     state: BlueprintState = {
         "project_id": project_id,
         "run_id": run_id,
@@ -40,8 +41,9 @@ def make_initial_state(project_id: UUID, run_id: UUID, idea: str) -> BlueprintSt
         "requirements_content": None,
         "diagrams_content": None,
         "diagrams_json_content": None,
-        "planner_content": None,
+        "planner_json_content": None,
         "export_content": None,
+        "export_json_content": None,
         
         # MinIO URIs (COMMENTED - not used anymore)
         # "requirements_uri": None,
@@ -146,8 +148,9 @@ async def node_requirements(state: BlueprintState) -> BlueprintState:
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
+        "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
@@ -225,8 +228,9 @@ These diagrams can be rendered directly in the frontend using React Flow.
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
+        "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
@@ -244,35 +248,30 @@ async def node_planner(state: BlueprintState) -> BlueprintState:
 
     publish(f"run:{run_id}", "Running: PlannerAgent")
 
-    # 1) LLM - Génère le plan de projet
-    plan_md = await generate_plan(idea)
+    # 1) LLM - Génère le plan structuré (JSON uniquement - pas de markdown pour économiser tokens)
+    plan_json_str = await generate_plan_json(idea)
 
-    # 2) Export (MinIO/S3) - COMMENTED: stockage direct
-    # uri = await export_markdown(
-    #     project_id=project_id,
-    #     content=plan_md,
-    # )
+    # 2) Clean JSON if wrapped in markdown code blocks
+    cleaned_json = plan_json_str.strip()
+    if cleaned_json.startswith("```"):
+        lines = cleaned_json.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned_json = "\n".join(lines).strip()
 
-    # 3) Persist - COMMENTED: optionnel
-    # persist_artifact(
-    #     session=session,
-    #     project_id=project_id,
-    #     kind="plan",
-    #     content=plan_md,
-    #     storage_uri=None,
-    # )
+    # 3) Update state - Stockage JSON uniquement (optimisation tokens)
+    state["planner_json_content"] = cleaned_json
 
-    # 4) Update state - Stockage direct du texte
-    state["sprint_planning"] = plan_md
-    state["planner_content"] = plan_md  # 🆕 Pour le frontend
-
-    # 5) Sauvegarder le state complet en JSON dans la DB (MongoDB async)
+    # 4) Sauvegarder le state complet en JSON dans la DB (MongoDB async)
     state_json = {
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
+        "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
@@ -285,10 +284,11 @@ async def node_planner(state: BlueprintState) -> BlueprintState:
 # ------------------------------------------------------------
 async def node_export(state: BlueprintState) -> BlueprintState:
     run_id = state["run_id"]
+    idea = state["idea"]
 
     publish(f"run:{run_id}", "Running: ExportAgent")
 
-    # Assemble markdown final pour la documentation complète
+    # 1) Assemble markdown final pour la documentation complète
     state["blueprint_markdown"] = "\n\n".join(
         filter(
             None,
@@ -300,27 +300,154 @@ async def node_export(state: BlueprintState) -> BlueprintState:
         )
     )
     
-    # Stocke aussi le contenu final dans export_content
+    # 2) Stocke aussi le contenu final dans export_content
     state["export_content"] = state["blueprint_markdown"]
 
-    # Result URIs - COMMENTED: plus besoin de MinIO
-    # state["result_uri"] = (
-    #     state.get("plan_uri")
-    #     or state.get("requirements_uri")
-    #     or state.get("diagrams_uri")
-    # )
+    # 3) Génère le JSON structuré pour l'export (document + github_export)
+    export_json_str = await generate_export_json(
+        idea=idea,
+        requirements=state.get("requirements_content") or "",
+        diagrams_json=state.get("diagrams_json_content") or "",
+        planner_json=state.get("planner_json_content") or "",
+    )
 
-    # Sauvegarder le state final complet en JSON dans la DB (MongoDB async)
+    # 4) Clean JSON if wrapped in markdown code blocks
+    cleaned_json = export_json_str.strip()
+    if cleaned_json.startswith("```"):
+        lines = cleaned_json.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned_json = "\n".join(lines).strip()
+
+    state["export_json_content"] = cleaned_json
+
+    # 5) Sauvegarder le state final complet en JSON dans la DB (MongoDB async)
     state_json = {
         "requirements_content": state.get("requirements_content"),
         "diagrams_content": state.get("diagrams_content"),
         "diagrams_json_content": state.get("diagrams_json_content"),
-        "planner_content": state.get("planner_content"),
+        "planner_json_content": state.get("planner_json_content"),
         "export_content": state.get("export_content"),
+        "export_json_content": state.get("export_json_content"),
         "blueprint_markdown": state.get("blueprint_markdown"),
     }
     await runs_repo.update_run_state(run_id, state_json)
 
     publish(f"run:{run_id}", "DONE: All content stored in state")
+
+    return state
+
+
+# ------------------------------------------------------------
+# Node 5: Persist to Collections
+# ------------------------------------------------------------
+async def node_persist_to_collections(state: BlueprintState) -> BlueprintState:
+    """
+    Final node: Persists the generated data from state to the appropriate
+    domain collections (diagrams, requirements, project).
+    Uses existing service functions.
+    """
+    from app.services import diagram_service, requirement_service, project_service
+    from app.domain.diagram import DiagramStructure
+    from app.domain.requirement import RequirementStructure
+    from datetime import datetime
+    
+    run_id = state["run_id"]
+    project_id = state["project_id"]
+
+    publish(f"run:{run_id}", "Running: PersistToCollections")
+    print(f"[PERSIST_NODE] Starting persist for project_id={project_id}")
+
+    try:
+        # -----------------------------------------------------
+        # 1) Save Diagrams from diagrams_json_content
+        # -----------------------------------------------------
+        diagrams_json_str = state.get("diagrams_json_content")
+        if diagrams_json_str:
+            try:
+                diagrams_data = json.loads(diagrams_json_str)
+                diagrams_saved = 0
+                
+                # diagrams_data has keys: class, sequence, activity, usecase
+                for diagram_type, diagram_content in diagrams_data.items():
+                    if isinstance(diagram_content, dict) and "nodes" in diagram_content:
+                        diagram_struct = DiagramStructure(
+                            title=diagram_content.get("title", f"{diagram_type.capitalize()} Diagram"),
+                            type=diagram_content.get("type", diagram_type),
+                            nodes=diagram_content.get("nodes", []),
+                            edges=diagram_content.get("edges", []),
+                            created_at=datetime.utcnow(),
+                            updated_at=datetime.utcnow(),
+                        )
+                        await diagram_service.create(project_id, diagram_struct)
+                        diagrams_saved += 1
+                
+                print(f"[PERSIST_NODE] Saved {diagrams_saved} diagrams")
+            except json.JSONDecodeError as e:
+                print(f"[PERSIST_NODE] Failed to parse diagrams JSON: {e}")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving diagrams: {e}")
+
+        # -----------------------------------------------------
+        # 2) Save Requirements from requirements_content
+        # -----------------------------------------------------
+        requirements_md = state.get("requirements_content")
+        if requirements_md:
+            try:
+                # Save the full requirements document as a single requirement
+                requirement_struct = RequirementStructure(
+                    title="Project Requirements Document",
+                    category="Full Document",
+                    description="Auto-generated requirements from blueprint agent",
+                    content=requirements_md,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+                await requirement_service.create(project_id, requirement_struct)
+                print(f"[PERSIST_NODE] Saved requirements document")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving requirements: {e}")
+
+        # -----------------------------------------------------
+        # 3) Update Project with full_description (blueprint)
+        # -----------------------------------------------------
+        blueprint_md = state.get("blueprint_markdown")
+        if blueprint_md:
+            try:
+                await project_service.update(project_id, {
+                    "full_description": blueprint_md,
+                    "updated_at": datetime.utcnow(),
+                })
+                print(f"[PERSIST_NODE] Updated project full_description")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error updating project: {e}")
+
+        # -----------------------------------------------------
+        # 4) Save Sprint Plan as a requirement document
+        # -----------------------------------------------------
+        planner_md = state.get("planner_content")
+        if planner_md:
+            try:
+                plan_struct = RequirementStructure(
+                    title="Project Execution Plan",
+                    category="Sprint Planning",
+                    description="Auto-generated sprint plan from blueprint agent",
+                    content=planner_md,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+                await requirement_service.create(project_id, plan_struct)
+                print(f"[PERSIST_NODE] Saved sprint plan document")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving sprint plan: {e}")
+
+        publish(f"run:{run_id}", "PERSIST: Data saved to collections")
+        print(f"[PERSIST_NODE] Completed successfully")
+
+    except Exception as e:
+        print(f"[PERSIST_NODE] Critical error: {e}")
+        publish(f"run:{run_id}", f"PERSIST_ERROR: {str(e)}")
 
     return state

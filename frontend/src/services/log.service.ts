@@ -1,5 +1,6 @@
 import { mainApi } from './main-api';
-import type { Log } from '@/types/log.type';
+import type { Log, LogEntry } from '@/types/log.type';
+import type { AuthUser } from '@/types/user.type';
 
 // Fetch all logs for a project (requires manage_project permission)
 export async function fetchLogs(projectId: string, _user?: unknown): Promise<Log[]> {

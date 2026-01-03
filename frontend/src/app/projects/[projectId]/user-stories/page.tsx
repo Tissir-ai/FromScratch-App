@@ -29,7 +29,12 @@ interface UserStoriesPageProps {
 }
 
 export default function UserStoriesPage({ params }: UserStoriesPageProps) {
-  const resolved = (typeof (params as any)?.then === "function") ? (React as any).use(params as Promise<{ projectId: string }>) : (params as { projectId: string });
+  // Always call React.use() unconditionally to maintain hooks order
+  const resolved = React.use(
+    typeof (params as any)?.then === "function"
+      ? (params as Promise<{ projectId: string }>)
+      : Promise.resolve(params as { projectId: string })
+  );
   const projectId = resolved.projectId;
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);

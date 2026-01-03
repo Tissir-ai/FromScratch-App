@@ -7,9 +7,21 @@ const MAIN_API_BASE_URL = process.env.NEXT_PUBLIC_MAIN_API_BASE_URL ?? '/api';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+// Module-level user storage for services that can't easily access AuthContext
+let _currentUser: User | null = null;
+
+export function setCurrentUser(user: User | null): void {
+  _currentUser = user;
+}
+
+export function getCurrentUserFromStore(): User | null {
+  return _currentUser;
+}
+
 interface RequestOptions extends RequestInit {
   method?: HttpMethod;
   body?: any;
+  user?: User | null; // Accept user from context (takes priority)
 }
 
 async function requireAuthenticatedUser(): Promise<User> {
@@ -69,16 +81,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const mainApi = {
-  get: <T>(path: string, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'GET' }),
-  post: <T>(path: string, body?: any, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'POST', body }),
-  put: <T>(path: string, body?: any, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'PUT', body }),
-  patch: <T>(path: string, body?: any, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'PATCH', body }),
-  delete: <T>(path: string, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'DELETE' }),
+  get: <T>(path: string, user?: User | null, options?: RequestOptions) =>
+    request<T>(path, { ...(options || {}), method: 'GET', user }),
+  post: <T>(path: string, body?: any, user?: User | null, options?: RequestOptions) =>
+    request<T>(path, { ...(options || {}), method: 'POST', body, user }),
+  put: <T>(path: string, body?: any, user?: User | null, options?: RequestOptions) =>
+    request<T>(path, { ...(options || {}), method: 'PUT', body, user }),
+  patch: <T>(path: string, body?: any, user?: User | null, options?: RequestOptions) =>
+    request<T>(path, { ...(options || {}), method: 'PATCH', body, user }),
+  delete: <T>(path: string, user?: User | null, options?: RequestOptions) =>
+    request<T>(path, { ...(options || {}), method: 'DELETE', user }),
 };
 
 export { MAIN_API_BASE_URL };

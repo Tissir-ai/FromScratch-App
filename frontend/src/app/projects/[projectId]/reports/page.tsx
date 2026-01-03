@@ -5,7 +5,12 @@ import PageLayout from "@/components/project/PageLayout";
 interface ReportsPageProps { params: { projectId: string } | Promise<{ projectId: string }> }
 
 export default function ReportsPage({ params }: ReportsPageProps) {
-  const resolved = (typeof (params as any)?.then === "function") ? React.use(params as Promise<{ projectId: string }>) : (params as { projectId: string });
+  // Always call React.use() unconditionally to maintain hooks order
+  const resolved = React.use(
+    typeof (params as any)?.then === "function"
+      ? (params as Promise<{ projectId: string }>)
+      : Promise.resolve(params as { projectId: string })
+  );
   const projectId = resolved.projectId;
   return (
     <PageLayout title="Reports" projectId={projectId}>

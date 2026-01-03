@@ -24,13 +24,13 @@ def run_blueprint_job(run_id_str: str, project_id_str: str, idea: str, webhook_u
     """
     # Convertir les strings en UUID
     run_id = UUID(run_id_str)
-    project_id = UUID(project_id_str)
+    project_id = project_id_str
     
     # RQ est synchrone, on doit exécuter l'async dans une boucle
     asyncio.run(_async_run_blueprint_job(run_id, project_id, idea, webhook_url))
 
 
-async def _async_run_blueprint_job(run_id: UUID, project_id: UUID, idea: str, webhook_url: str | None):
+async def _async_run_blueprint_job(run_id: UUID, project_id: str, idea: str, webhook_url: str | None):
     """Version async du job"""
     print(f"[JOB] Starting job for run_id={run_id}, project_id={project_id}")
     
@@ -60,16 +60,6 @@ async def _async_run_blueprint_job(run_id: UUID, project_id: UUID, idea: str, we
         await runs_repo.update_run_status(run_id, "succeeded")
         publish(f"run:{run_id}", "STATUS:succeeded")
 
-        # 2) Exécuter le pipeline d'agents
-        result = await run_blueprint_pipeline(
-            project_id=project_id,
-            run_id=run_id,
-            idea=idea,
-        )
-
-        # 3) Mettre à jour le statut à "succeeded"
-        await runs_repo.update_run_status(run_id, "succeeded")
-        publish(f"run:{run_id}", "STATUS:succeeded")
 
         # 4) Appeler le webhook si fourni
         if webhook_url:

@@ -7,7 +7,7 @@ services:
     container_name: fromscratch-frontend
     restart: unless-stopped
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     networks:
       - fromscratch-network
     expose:
@@ -15,12 +15,7 @@ services:
     depends_on:
       - backend
       - auth
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+
 
   # ============== NGINX REVERSE PROXY ==============
   nginx:
@@ -54,12 +49,12 @@ services:
       - ./auth/.env
 
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=4000
       - DATABASE_URL=postgresql://postgres:postgres@auth-db:5432/fromscratch_auth?schema=public
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
       - JWT_ACCESS_EXPIRES_IN=15m
-      - CORS_ORIGIN=http://localhost:3106
+      - CORS_ORIGIN=https://tissirai.fojas.ai,http://localhost:3106
     depends_on:
       auth-db:
         condition: service_healthy
@@ -102,8 +97,12 @@ services:
       dockerfile: Dockerfile
     container_name: fromscratch-backend
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
+
     environment:
       - APP_ENV=production
+      - FRONTEND_URL=https://tissirai.fojas.ai
       - SECRET_KEY=your-backend-secret-key-min-32-characters-here
       - JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-min-32-chars
       - MONGODB_URI=mongodb://admin:admin@mongo:27017/fromscratch?authSource=admin
@@ -112,10 +111,8 @@ services:
       - STORAGE_ACCESS_KEY=minioadmin
       - STORAGE_SECRET_KEY=minioadmin
       - STORAGE_BUCKET=fromscratch
-      - MODEL_PROVIDER=nvidia
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
-      - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=https://tissirai.fojas.ai,http://tissirai.fojas.ai,http://localhost:3106
+      - MODEL_PROVIDER=openai
+      - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     expose:
       - "8000"
     networks:
@@ -138,6 +135,8 @@ services:
       dockerfile: Dockerfile
     container_name: fromscratch-worker
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
       - APP_ENV=production
       - SECRET_KEY=your-backend-secret-key-min-32-characters-here
@@ -148,10 +147,10 @@ services:
       - STORAGE_ACCESS_KEY=minioadmin
       - STORAGE_SECRET_KEY=minioadmin
       - STORAGE_BUCKET=fromscratch
-      - MODEL_PROVIDER=nvidia
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvapi-placeholder}
-      - NVIDIA_MODEL=deepseek-ai/deepseek-r1
-      - CORS_ORIGINS=https://tissirai.fojas.ais.ai
+      - MODEL_PROVIDER=openai
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LITELLM_MODEL=gpt-4o-mini
+      - CORS_ORIGINS=https://tissirai.fojas.ai,http://localhost:3106
     networks:
       - fromscratch-network
     depends_on:
@@ -229,14 +228,30 @@ services:
     container_name: fromscratch-stripe-cli
     restart: unless-stopped
     env_file:
-      - /auth/.env
-    environment:
-      # Provide your test secret key in .env as STRIPE_SECRET_KEY
-      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+      - ./auth/.env
     # forward Stripe events to the api service inside this compose network
     command: ["listen", "--forward-to", "http://auth:4000/api/payments/webhook", "--print-secret"]
     depends_on:
       - auth
+
+  
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      - mongo
+    networks:
+      - fromscratch-network
 
 networks:
   fromscratch-network:

@@ -1,5 +1,6 @@
 import { mainApi } from './main-api'
-import type { CreateProjectPayload, Project , OverviewData } from '@/types/project.type'
+import type { CreateProjectPayload, Project, OverviewData } from '@/types/project.type'
+import type { AuthUser } from '@/types/user.type'
 
 export interface RunStatus {
   run_id: string
@@ -24,19 +25,18 @@ export interface GenerateResponse {
   websocket_url: string
 }
 
-export async function fetchProjects(): Promise<Project[]> {
+export async function fetchProjects(user: AuthUser): Promise<Project[]> {
   // Base URL already includes /api; avoid double /api
-  return mainApi.get<Project[]>('/v1/projects')
+  return mainApi.get<Project[]>('/v1/projects', user)
 }
 
-export async function fetchProjectOverview(id: string): Promise<OverviewData> {
-  return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`)
+export async function fetchProjectOverview(id: string, user: AuthUser): Promise<OverviewData> {
+  return mainApi.get<OverviewData>(`/v1/projects/${id}/overview`, user)
 }
 
 export async function fetchMemberPermissions(projectId: string, infoId: string): Promise<string[]> {
   return mainApi.get<string[]>(`/v1/projects/${projectId}/user/${infoId}/permissions`)
 }
-
 
 export async function createProject(payload: CreateProjectPayload): Promise<Project> {
   return mainApi.post<Project>('/v1/projects', payload)
@@ -61,59 +61,56 @@ export async function generateFromScratchProject({
   })
 }
 
-export async function getRunStatus(runId: string): Promise<RunStatus> {
-  return mainApi.get<RunStatus>(`/v1/runs/${runId}`)
+export async function getRunStatus(runId: string, user: AuthUser): Promise<RunStatus> {
+  return mainApi.get<RunStatus>(`/v1/runs/${runId}`, user)
 }
 
 export async function pollRunStatus(
-  runId: string, 
+  runId: string,
+  user: AuthUser,
   onUpdate?: (status: RunStatus) => void,
   maxAttempts: number = 120, // 10 minutes with 5s intervals
   interval: number = 5000
 ): Promise<RunStatus> {
   let attempts = 0
-  
+
   return new Promise((resolve, reject) => {
     const poll = async () => {
       try {
-        const status = await getRunStatus(runId)
-        
-        // Call update callback if provided
+        const status = await getRunStatus(runId, user)
+
         if (onUpdate) {
           onUpdate(status)
         }
-        
-        // Check if completed or failed
+
         if (status.status === 'completed') {
           resolve(status)
           return
         }
-        
+
         if (status.status === 'failed') {
           reject(new Error('Project generation failed'))
           return
         }
-        
-        // Check max attempts
+
         attempts++
         if (attempts >= maxAttempts) {
           reject(new Error('Project generation timed out'))
           return
         }
-        
-        // Continue polling
+
         setTimeout(poll, interval)
       } catch (error) {
         reject(error)
       }
     }
-    
+
     poll()
   })
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  await mainApi.delete<void>(`/v1/projects/${id}`)
+export async function deleteProject(id: string, user: AuthUser): Promise<void> {
+  await mainApi.delete<void>(`/v1/projects/${id}`, user)
 }
 
 export async function fetchProjectOwner(projectId: string): Promise<string> {
