@@ -278,5 +278,5 @@ async def delete_user_from_project(project_id: str, user_id: str, current_user: 
         raise HTTPException(404, "Project not found")
     if not await isAllowed(current_user.get("id"), project_id, "manage_project"):
         raise HTTPException(403, "Not enough permissions")
-    await log_activity(project_id, current_user.get("id"), f"{current_user.get("name")} Removed user from project")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name')} Removed user from project")
     return await delete_user(project_id , user_id)

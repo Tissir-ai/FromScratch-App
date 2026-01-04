@@ -24,7 +24,7 @@ async def create_role(project_id: str, payload: RoleDomain, current_user: object
     # If payload is not assignable, construct a new RoleDomain instance
     payload = RoleDomain(project_id=project_id, name=getattr(payload, "name", ""), permissions=getattr(payload, "permissions", []))
     role = await create(payload)
-    await log_activity(project_id, current_user.get("id"), f"{current_user.get("name")} Created role: {role.name}")
+    await log_activity(project_id, current_user.get("id"), f"{current_user.get('name')} Created role: {role.name}")
     await broadcast_crud_event(str(project_id), "roles", "create", "roles", role.model_dump() if hasattr(role, "model_dump") else dict(role))
     return role
 
