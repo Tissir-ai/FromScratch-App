@@ -31,7 +31,7 @@ const Hero = () => {
   const router = useRouter(); 
 
   const MIN_PROMPT = 30;
-  const MAX_PROMPT = 300;
+  const MAX_PROMPT = 1000;
   const steps = [
     {
       id: 0,
