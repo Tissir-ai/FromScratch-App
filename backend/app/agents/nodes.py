@@ -340,13 +340,14 @@ async def node_export(state: BlueprintState) -> BlueprintState:
 async def node_persist_to_collections(state: BlueprintState) -> BlueprintState:
     """
     Final node: Persists the generated data from state to the appropriate
-    domain collections (diagrams, requirements, project, planners, exports).
+    domain collections (diagrams, requirements, project, planners, exports, tasks).
     Uses existing service functions.
     """
     from app.services import diagram_service, requirement_service, project_service
-    from app.services import planner_service, export_service
+    from app.services import planner_service, export_service, task_service
     from app.domain.diagram import DiagramStructure
     from app.domain.requirement import RequirementStructure
+    from app.domain.task import TaskStructure
     from datetime import datetime
     
     run_id = state["run_id"]
@@ -491,6 +492,80 @@ async def node_persist_to_collections(state: BlueprintState) -> BlueprintState:
                     print(f"[PERSIST_NODE] Failed to save export data")
             except Exception as e:
                 print(f"[PERSIST_NODE] Error saving export: {e}")
+
+        # -----------------------------------------------------
+        # 6) Save Tasks from planner_json_content
+        # -----------------------------------------------------
+        planner_json_str = state.get("planner_json_content")
+        print(f"[PERSIST_NODE] ======= TASKS EXTRACTION START =======")
+        print(f"[PERSIST_NODE] planner_json_str exists: {planner_json_str is not None}")
+        
+        if planner_json_str:
+            try:
+                planner_data = json.loads(planner_json_str)
+                tasks_list = planner_data.get("tasks", [])
+                print(f"[PERSIST_NODE] Found {len(tasks_list)} tasks in planner JSON")
+                
+                if not tasks_list:
+                    print(f"[PERSIST_NODE] WARNING: No tasks found in planner_json_content")
+                    print(f"[PERSIST_NODE] planner_data keys: {list(planner_data.keys())}")
+                
+                tasks_saved = 0
+                
+                for idx, task_item in enumerate(tasks_list):
+                    # Map priority values to ensure consistency
+                    priority = task_item.get("priority", "medium")
+                    if isinstance(priority, str):
+                        priority = priority.lower()
+                    if priority not in ["low", "medium", "high", "critical"]:
+                        priority = "medium"
+                    
+                    # Map status values to ensure consistency
+                    status = task_item.get("status", "backlog")
+                    if isinstance(status, str):
+                        status = status.lower()
+                    if status not in ["backlog", "todo", "in-progress", "review", "done"]:
+                        status = "backlog"
+                    
+                    task_title = task_item.get("title", "Untitled Task")
+                    task_description = task_item.get("description", "")
+                    
+                    print(f"[PERSIST_NODE] Task {idx+1}: title='{task_title}', priority='{priority}', status='{status}'")
+                    print(f"[PERSIST_NODE] Task {idx+1} description: {task_description[:100]}..." if len(task_description) > 100 else f"[PERSIST_NODE] Task {idx+1} description: {task_description}")
+                    
+                    # Create task as dict instead of TaskStructure for compatibility
+                    task_payload = {
+                        "title": task_title,
+                        "description": task_description,
+                        "assignee_id": None,
+                        "status": status,
+                        "priority": priority,
+                        "due_date": None,
+                        "asign_date": None,
+                    }
+                    
+                    print(f"[PERSIST_NODE] Calling task_service.create for task {idx+1}...")
+                    try:
+                        created_task = await task_service.create(project_id, task_payload)
+                        print(f"[PERSIST_NODE] Task {idx+1} created successfully: id={created_task.id if hasattr(created_task, 'id') else 'N/A'}")
+                        tasks_saved += 1
+                    except Exception as task_err:
+                        print(f"[PERSIST_NODE] ERROR creating task {idx+1}: {task_err}")
+                        import traceback
+                        traceback.print_exc()
+                
+                print(f"[PERSIST_NODE] ======= TASKS EXTRACTION COMPLETE =======")
+                print(f"[PERSIST_NODE] Total tasks saved: {tasks_saved}/{len(tasks_list)}")
+                
+            except json.JSONDecodeError as e:
+                print(f"[PERSIST_NODE] Failed to parse planner JSON for tasks: {e}")
+                print(f"[PERSIST_NODE] Raw planner_json_str (first 500 chars): {planner_json_str[:500]}")
+            except Exception as e:
+                print(f"[PERSIST_NODE] Error saving tasks: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print(f"[PERSIST_NODE] WARNING: planner_json_content is None or empty")
 
         publish(f"run:{run_id}", "PERSIST: Data saved to collections")
         print(f"[PERSIST_NODE] Completed successfully")
