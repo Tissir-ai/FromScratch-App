@@ -21,7 +21,7 @@ export function getCurrentUserFromStore(): User | null {
 interface RequestOptions extends RequestInit {
   method?: HttpMethod;
   body?: any;
-  user?: User | null; // Accept user from context (takes priority)
+  responseType?: 'json' | 'text' | 'blob';
 }
 
 async function requireAuthenticatedUser(): Promise<User> {
@@ -63,11 +63,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   let data: any = null;
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json().catch(() => null);
+  const desired = options.responseType ?? 'json';
+  if (desired === 'blob') {
+    data = await response.blob().catch(() => null);
   } else {
-    data = await response.text().catch(() => null);
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json().catch(() => null);
+    } else {
+      data = await response.text().catch(() => null);
+    }
   }
 
   if (!response.ok) {
@@ -82,15 +87,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 export const mainApi = {
   get: <T>(path: string, user?: User | null, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'GET', user }),
+    request<T>(path, { ...(options || {}), method: 'GET'}),
   post: <T>(path: string, body?: any, user?: User | null, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'POST', body, user }),
+    request<T>(path, { ...(options || {}), method: 'POST', body }),
   put: <T>(path: string, body?: any, user?: User | null, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'PUT', body, user }),
+    request<T>(path, { ...(options || {}), method: 'PUT', body  }),
   patch: <T>(path: string, body?: any, user?: User | null, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'PATCH', body, user }),
+    request<T>(path, { ...(options || {}), method: 'PATCH', body  }),
   delete: <T>(path: string, user?: User | null, options?: RequestOptions) =>
-    request<T>(path, { ...(options || {}), method: 'DELETE', user }),
+    request<T>(path, { ...(options || {}), method: 'DELETE'  }),
 };
 
 export { MAIN_API_BASE_URL };

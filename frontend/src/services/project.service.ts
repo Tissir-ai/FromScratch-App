@@ -1,7 +1,6 @@
 import { mainApi } from './main-api'
-import type { CreateProjectPayload, Project, OverviewData } from '@/types/project.type'
-import type { AuthUser } from '@/types/user.type'
-
+import type { CreateProjectPayload, Project , OverviewData, UpdateProjectPayload } from '@/types/project.type'
+import type {AuthUser} from "@/types/user.type";
 export interface RunStatus {
   run_id: string
   project_id: string
@@ -27,7 +26,15 @@ export interface GenerateResponse {
 
 export async function fetchProjects(user: AuthUser): Promise<Project[]> {
   // Base URL already includes /api; avoid double /api
-  return mainApi.get<Project[]>('/v1/projects', user)
+  return mainApi.get<Project[]>('/v1/projects')
+}
+
+export async function fetchProjectById(id: string): Promise<Project> {
+  return mainApi.get<Project>(`/v1/projects/${id}`)
+}
+
+export async function updateProject(id: string, payload: UpdateProjectPayload): Promise<Project> {
+  return mainApi.put<Project>(`/v1/projects/${id}`, payload)
 }
 
 export async function fetchProjectOverview(id: string, user: AuthUser): Promise<OverviewData> {

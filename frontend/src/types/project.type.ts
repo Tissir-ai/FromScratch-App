@@ -38,6 +38,12 @@ export interface CreateProjectPayload {
   description?: string
 }
 
+export interface UpdateProjectPayload {
+  name: string
+  description?: string
+  full_description?: string
+}
+
 export interface ProjectInvitation {
   id: string
   email: string

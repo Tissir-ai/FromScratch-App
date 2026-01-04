@@ -55,7 +55,7 @@
     ],
    "config": { 
      "nbrProjects": 10,
-     "allowPages": ["overview","dashboard","diagrams","reports","requirements","tasks","logs","settings"],
+     "allowPages": ["overview","dashboard","diagrams","reports","requirements","tasks","activities","settings"],
      "pdfExport": true,
      "githubExport": true,
      "chatTokens": 10
@@ -76,7 +76,7 @@
     ],
     "config": { 
      "nbrProjects": 50,
-     "allowPages": ["overview","dashboard","diagrams","reports","requirements","tasks","logs","settings"] ,
+     "allowPages": ["overview","dashboard","diagrams","reports","requirements","tasks","activities","settings"] ,
      "pdfExport": true,
      "githubExport": true,
      "chatTokens": 50

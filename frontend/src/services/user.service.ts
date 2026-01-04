@@ -1,7 +1,6 @@
-import { UserRef } from '@/types/task.type';
-import { mainApi } from './main-api';
-import { authApi } from './auth-api';
-import { info } from 'console';
+import { UserRef } from "@/types/task.type";
+import { mainApi } from "./main-api";
+import { authApi } from "./auth-api";
 
 /**
  * Get user by ID from auth service
@@ -48,4 +47,63 @@ export const searchUsers = async (query: string, projectId?: string): Promise<Us
     throw error;
   }
 };
+
+export const searchUsersSettings = async (projectId?: string): Promise<UserRef[]> => {
+  try {
+    if (!projectId) {
+      console.warn('[UserService] No projectId provided for user search');
+      return [];
+    }
+    const response = await mainApi.get<any[]>(`/v1/projects/${projectId}/members/settings`);
+    const mapped = response.map(user => ({
+      id: user.id,
+      name: user.name,
+      info_id: user.info_id,
+      email: user.email,
+      role : user.role,
+      team : user.team,
+    }));
+    console.log('[UserService] Mapped results:', mapped);
+    return mapped;
+  } catch (error) {
+    console.error('[UserService] Failed to search users:', error);
+    throw error;
+  }
+};
+
+/**
+ * Assign a role to a user in a project
+ * POST /api/v1/projects/{projectId}/user/assign
+ */
+export async function assignUserRole(
+  projectId: string,
+  userId: string,
+  roleId: string
+): Promise<any> {
+  try {
+    return await mainApi.post(`/v1/projects/${projectId}/user/assign`, {
+      user_id: userId,
+      role_id: roleId,
+    });
+  } catch (error) {
+    console.error('[UserService] Failed to assign user role:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a user from a project
+ * DELETE /api/v1/projects/{projectId}/user/{userId}
+ */
+export async function removeUserFromProject(
+  projectId: string,
+  userId: string
+): Promise<any> {
+  try {
+    return await mainApi.delete(`/v1/projects/${projectId}/user/${userId}`);
+  } catch (error) {
+    console.error('[UserService] Failed to remove user from project:', error);
+    throw error;
+  }
+}
 

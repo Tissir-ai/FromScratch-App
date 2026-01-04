@@ -26,6 +26,16 @@ async def get_runs_by_project(project_id: Union[str, UUID]) -> List[RunDomain]:
     """
     return await RunDomain.find(RunDomain.project_id == project_id).to_list()
 
+
+async def get_latest_run_for_project(project_id: Union[str, UUID]) -> Optional[RunDomain]:
+    """Return the most recent run for a project (or None)."""
+    return await (
+        RunDomain
+        .find(RunDomain.project_id == str(project_id))
+        .sort("-created_at")
+        .first_or_none()
+    )
+
 async def update_run_status(run_id: Union[str, UUID], status: str) -> Optional[RunDomain]:
     """
     Met à jour le statut d'un run.

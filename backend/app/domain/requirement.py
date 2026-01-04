@@ -9,7 +9,7 @@ class RequirementStructure(BaseModel):
     category: str 
     description: str | None = None
     content: str | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)   
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class RequirementDomain(Document):

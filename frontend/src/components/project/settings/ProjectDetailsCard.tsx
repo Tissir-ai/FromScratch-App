@@ -3,24 +3,32 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Layout, Save } from "lucide-react";
+import { Layout, Save, X } from "lucide-react";
 
 interface ProjectDetailsCardProps {
   projectName: string;
   projectDescription: string;
+  projectFullDescription: string;
+  hasChanges: boolean;
   saving: boolean;
   onChangeName: (name: string) => void;
   onChangeDescription: (desc: string) => void;
+  onChangeFullDescription: (desc: string) => void;
   onSave: () => void;
+  onCancel: () => void;
 }
 
 export default function ProjectDetailsCard({
   projectName,
   projectDescription,
+  projectFullDescription,
+  hasChanges,
   saving,
   onChangeName,
   onChangeDescription,
+  onChangeFullDescription,
   onSave,
+  onCancel,
 }: ProjectDetailsCardProps) {
   return (
     <Card className="p-6 space-y-6">
@@ -47,17 +55,34 @@ export default function ProjectDetailsCard({
           <Textarea
             value={projectDescription}
             onChange={(e) => onChangeDescription(e.target.value)}
-            rows={3}
+            rows={2}
             placeholder="Describe the project"
           />
           <p className="text-xs text-muted-foreground">Write a short description to set context for your team.</p>
         </div>
       </div>
-      <div className="flex justify-end">
-        <Button onClick={onSave} disabled={saving} className="gap-2">
-          <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save changes"}
-        </Button>
+      <div className="grid gap-6 md:grid-cols-[220px_1fr] items-start">
+        <label className="text-sm text-muted-foreground mt-2">Full Description</label>
+        <div className="space-y-2">
+          <Textarea
+            value={projectFullDescription}
+            onChange={(e) => onChangeFullDescription(e.target.value)}
+            rows={8}
+            placeholder="Describe the project"
+          />
+          <p className="text-xs text-muted-foreground">Write your full description to provide detailed context for your team.</p>
+        </div>
       </div>
+      {hasChanges && (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onCancel} disabled={saving} className="gap-2">
+            <X className="h-4 w-4" /> Cancel
+          </Button>
+          <Button onClick={onSave} disabled={saving} className="gap-2">
+            <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save changes"}
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
