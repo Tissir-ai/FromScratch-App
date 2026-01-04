@@ -1,14 +1,16 @@
 "use client";
-import React from "react";
-import { useCallback, useEffect, useState } from "react";
-import { GripVertical } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Download, RefreshCw, GripVertical } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 import PageLayout from "@/components/project/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchReportPdf, fetchReportSections } from "@/services/report.service";
-import type { ReportSection, ReportTemplate } from "@/types/report.type";
+import { fetchReportData } from "@/services/report.service";
+import { ReportPreview } from "@/components/project/reports";
+import type { ReportDataResponse, ReportTemplate } from "@/types/report.type";
 
 interface ReportsPageProps {
   params: { projectId: string } | Promise<{ projectId: string }>;
@@ -25,129 +27,155 @@ export default function ReportsPage({ params }: ReportsPageProps) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sections, setSections] = useState<ReportSection[]>([]);
-  const [orderedSections, setOrderedSections] = useState<ReportSection[]>([]);
+  const [reportData, setReportData] = useState<ReportDataResponse | null>(null);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>(undefined);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("default");
   const [downloading, setDownloading] = useState(false);
-  
-  const [projectName, setProjectName] = useState<string>("");
-  const [projectOwner, setProjectOwner] = useState<string>("");
-  const [requirementsCount, setRequirementsCount] = useState<number>(0);
-  const [diagramsCount, setDiagramsCount] = useState<number>(0);
-  
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [sectionOrder, setSectionOrder] = useState<string[]>([]);
 
-  const loadSections = useCallback(() => {
+  const previewRef = useRef<HTMLDivElement>(null);
+  const previewScrollRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId) || templates[0];
+
+  const loadReportData = useCallback(() => {
     if (!projectId) return;
     setLoading(true);
     setError(null);
 
-    fetchReportSections(projectId)
+    fetchReportData(projectId)
       .then((data) => {
-        setProjectName(data.project_name || "");
-        setProjectOwner(data.project_owner || "");
-        setRequirementsCount((data.requirements || []).length);
-        setDiagramsCount((data.diagrams || []).length);
-        setSections(data.sections || []);
-        setOrderedSections(data.sections || []);
+        setReportData(data);
         setTemplates(data.templates || []);
         const firstTemplate = data.templates?.[0]?.id ?? "default";
-        setSelectedTemplate((prev) => {
-          const ids = (data.templates || []).map((t) => t.id);
+        setSelectedTemplateId((prev) => {
+          const ids = (data.templates || []).map((t:any) => t.id);
           if (prev && ids.includes(prev)) return prev;
           return firstTemplate;
         });
+        const defaultOrder: string[] = [];
+        if (data.requirements?.length) defaultOrder.push("requirements");
+        if (data.diagrams?.length) defaultOrder.push("diagrams");
+        if (data.planner_content) defaultOrder.push("planner");
+        if (data.export_content) defaultOrder.push("blueprint");
+        setSectionOrder(defaultOrder);
       })
-      .catch((err) => setError(err?.message || "Unable to load report sections"))
+      .catch((err) => setError(err?.message || "Unable to load report data"))
       .finally(() => setLoading(false));
   }, [projectId]);
 
   useEffect(() => {
-    loadSections();
-  }, [loadSections]);
+    loadReportData();
+  }, [loadReportData]);
+
+  const recalcPages = useCallback(() => {
+    const container = previewScrollRef.current;
+    if (!container) return;
+    const viewHeight = container.clientHeight || 1;
+    const scrollHeight = container.scrollHeight || 1;
+    const pages = Math.max(1, Math.ceil(scrollHeight / viewHeight));
+    const current = Math.min(pages, Math.max(1, Math.floor(container.scrollTop / viewHeight) + 1));
+    setTotalPages(pages);
+    setCurrentPage(current);
+  }, []);
 
   useEffect(() => {
-    if (!projectId || !selectedTemplate || orderedSections.length === 0) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    let active = true;
-    setPreviewLoading(true);
-
-    fetchReportPdf(projectId, selectedTemplate)
-      .then((blob) => {
-        if (!active) return;
-        const url = URL.createObjectURL(blob);
-        setPreviewUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
-      })
-      .catch((err) => setError(err?.message || "Unable to load PDF preview"))
-      .finally(() => {
-        if (active) setPreviewLoading(false);
-      });
-
+    const container = previewScrollRef.current;
+    if (!container) return;
+    recalcPages();
+    const onScroll = () => recalcPages();
+    container.addEventListener("scroll", onScroll);
+    const onResize = () => recalcPages();
+    window.addEventListener("resize", onResize);
     return () => {
-      active = false;
-      setPreviewLoading(false);
-      setPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
+      container.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
     };
-  }, [projectId, selectedTemplate, orderedSections.length]);
+  }, [recalcPages]);
 
-  const handleDownload = async () => {
-    if (!projectId || !selectedTemplate) return;
+  useEffect(() => {
+    recalcPages();
+  }, [reportData, selectedTemplateId, sectionOrder, recalcPages]);
+
+  const onDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
+  };
+
+  const onDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData("text/plain");
+    if (!draggedId || draggedId === targetId) return;
+
+    const current = [...sectionOrder];
+    const fromIdx = current.findIndex((id) => id === draggedId);
+    const toIdx = current.findIndex((id) => id === targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    current.splice(fromIdx, 1);
+    current.splice(toIdx, 0, draggedId);
+    setSectionOrder(current);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!previewRef.current || !reportData) return;
+    
     setDownloading(true);
     setError(null);
+
     try {
-      const blob = await fetchReportPdf(projectId, selectedTemplate);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `project-${projectId}-report.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+      // Capture the preview section as canvas
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      // Calculate PDF dimensions (A4)
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      const pdf = new jsPDF("p", "mm", "a4");
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add the image, handling multiple pages if needed
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download the PDF
+      pdf.save(`${reportData.project_name || "project"}-report.pdf`);
     } catch (err: any) {
-      setError(err?.message || "Unable to download report");
+      console.error("PDF generation error:", err);
+      setError(err?.message || "Failed to generate PDF");
     } finally {
       setDownloading(false);
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
-    setDraggedId(sectionId);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
-
-    const draggedIdx = orderedSections.findIndex(s => s.id === draggedId);
-    const targetIdx = orderedSections.findIndex(s => s.id === targetId);
-
-    if (draggedIdx === -1 || targetIdx === -1) return;
-
-    const newSections = [...orderedSections];
-    const [removed] = newSections.splice(draggedIdx, 1);
-    newSections.splice(targetIdx, 0, removed);
-    setOrderedSections(newSections);
-    setDraggedId(null);
-  };
+  const hasContent = reportData && (
+    (reportData.requirements && reportData.requirements.length > 0) ||
+    (reportData.diagrams && reportData.diagrams.length > 0) ||
+    reportData.planner_content ||
+    reportData.export_content
+  );
 
   const renderContent = () => {
     if (loading) {
@@ -166,61 +194,32 @@ export default function ReportsPage({ params }: ReportsPageProps) {
       );
     }
 
-    if (orderedSections.length === 0) {
+    if (!reportData || !hasContent) {
       return (
         <div className="text-center py-8">
-          <p className="text-sm text-muted-foreground">No report sections available yet. Generate a run to populate this page.</p>
+          <p className="text-sm text-muted-foreground">
+            No report content available yet. Add requirements, diagrams, or generate a run to populate this page.
+          </p>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-3 gap-4 h-[calc(100vh-250px)]">
-        {/* Left: Draggable Sections */}
-        <Card className="col-span-1 p-4 overflow-auto space-y-2">
-          <div className="sticky top-0 bg-background pb-2">
-            <p className="text-xs font-semibold text-muted-foreground">SECTIONS ({orderedSections.length})</p>
-            <p className="text-xs text-muted-foreground mt-1">Drag to reorder</p>
-          </div>
-          <div className="space-y-2">
-            {orderedSections.map((section) => (
-              <div
-                key={section.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, section.id)}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, section.id)}
-                className={`p-3 rounded-md border cursor-move transition-colors ${
-                  draggedId === section.id
-                    ? "bg-muted/50 border-primary/50"
-                    : "bg-background hover:bg-muted/30 border-muted"
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <GripVertical className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{section.title}</p>
-                    <p className="text-xs text-muted-foreground">{section.id}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Right: PDF Preview & Controls */}
-        <div className="col-span-2 space-y-3 flex flex-col">
-          <Card className="p-4 space-y-3">
+      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-100px)]">
+        {/* Left: Controls + Sections order */}
+        <div className="col-span-12 lg:col-span-4 space-y-4">
+          <Card className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground">TEMPLATE</p>
-                <h3 className="text-sm font-semibold mt-1">PDF Styling</h3>
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Template</p>
+                <h3 className="text-sm font-semibold">Styling</h3>
               </div>
-              <Button size="sm" onClick={handleDownload} disabled={downloading || previewLoading}>
-                {downloading ? "Downloading…" : "Download PDF"}
-              </Button>
+              <div className="text-xs text-muted-foreground text-right">
+                <div>Requirements: {reportData.requirements?.length || 0}</div>
+                <div>Diagrams: {reportData.diagrams?.length || 0}</div>
+              </div>
             </div>
-            <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+            <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select template" />
               </SelectTrigger>
@@ -229,9 +228,9 @@ export default function ReportsPage({ params }: ReportsPageProps) {
                   <SelectItem key={tpl.id} value={tpl.id}>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold">{tpl.label}</span>
-                      {tpl.description ? (
+                      {tpl.description && (
                         <span className="text-xs text-muted-foreground">{tpl.description}</span>
-                      ) : null}
+                      )}
                     </div>
                   </SelectItem>
                 ))}
@@ -239,18 +238,89 @@ export default function ReportsPage({ params }: ReportsPageProps) {
             </Select>
           </Card>
 
-          <Card className="flex-1 overflow-hidden rounded-md border bg-muted/30">
-            {previewLoading && (
-              <div className="p-4 text-sm text-muted-foreground">Loading preview…</div>
-            )}
-            {!previewLoading && previewUrl && (
-              <iframe title="Report preview" src={previewUrl} className="w-full h-full" />
-            )}
-            {!previewLoading && !previewUrl && (
-              <div className="h-full flex items-center justify-center p-4 text-sm text-muted-foreground">
-                Select a template to preview the PDF.
+          <Card className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground">Sections order</p>
+                <p className="text-xs text-muted-foreground">Drag to reorder the preview</p>
               </div>
-            )}
+            </div>
+            <div className="space-y-2">
+              {sectionOrder.map((sectionId) => {
+                const labelMap: Record<string, string> = {
+                  requirements: "Requirements",
+                  diagrams: "Architecture Diagrams",
+                  planner: "Implementation Plan",
+                  blueprint: "Blueprint",
+                };
+                return (
+                  <div
+                    key={sectionId}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, sectionId)}
+                    onDragOver={onDragOver}
+                    onDrop={(e) => onDrop(e, sectionId)}
+                    className="flex items-center gap-3 p-3 border rounded-md bg-background hover:bg-muted/50 cursor-move"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{labelMap[sectionId] || sectionId}</p>
+                      <p className="text-xs text-muted-foreground">{sectionId}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {sectionOrder.length === 0 && (
+                <div className="text-sm text-muted-foreground">No sections available to order.</div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Right: Preview */}
+        <div className="col-span-12 lg:col-span-8">
+          <Card className="h-full max-h-[calc(100vh-200px)] overflow-hidden bg-gray-100">
+            <div className="flex items-center justify-between px-4 pt-3 pb-1 text-sm text-muted-foreground">
+              <span>Pages: {currentPage} / {totalPages}</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => {
+                    const container = previewScrollRef.current;
+                    if (!container) return;
+                    const viewHeight = container.clientHeight || 1;
+                    container.scrollTo({ top: (currentPage - 2) * viewHeight, behavior: "smooth" });
+                  }}
+                >
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => {
+                    const container = previewScrollRef.current;
+                    if (!container) return;
+                    const viewHeight = container.clientHeight || 1;
+                    container.scrollTo({ top: currentPage * viewHeight, behavior: "smooth" });
+                  }}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 h-full overflow-auto" ref={previewScrollRef}>
+              <div className="mx-auto max-w-4xl shadow-lg">
+                <ReportPreview
+                  ref={previewRef}
+                  data={reportData}
+                  template={selectedTemplate}
+                  sectionsOrder={sectionOrder}
+                />
+              </div>
+            </div>
           </Card>
         </div>
       </div>
@@ -263,12 +333,18 @@ export default function ReportsPage({ params }: ReportsPageProps) {
         <div className="flex flex-wrap items-center gap-3 justify-between">
           <div>
             <h2 className="text-xl font-semibold">Reports</h2>
-            <p className="text-sm text-muted-foreground">{projectName || "Project"} · Owner: {projectOwner || "--"}</p>
-            <div className="text-xs text-muted-foreground mt-1">Requirements: {requirementsCount} · Diagrams: {diagramsCount}</div>
+            <p className="text-sm text-muted-foreground">
+              {reportData?.project_name || "Project"} · Owner: {reportData?.project_owner || "--"}
+            </p>
           </div>
-          <div className="flex items-center gap-2">   
-            <Button variant="outline" size="sm" onClick={loadSections} disabled={previewLoading || loading}>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={loadReportData} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
+            </Button>
+            <Button size="sm" onClick={handleDownloadPdf} disabled={downloading || loading}>
+              <Download className="h-4 w-4 mr-2" />
+              {downloading ? "Generating PDF…" : "Download"}
             </Button>
           </div>
         </div>
