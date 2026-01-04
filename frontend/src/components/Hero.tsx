@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { useProjectGeneration } from "@/hooks/useProjectGeneration";
+import { ProjectGenerationModal } from "@/components/project/projectWorkspace/ProjectGenerationModal";
 
 const ideas = [
   "Build an AI-powered food delivery app",
@@ -28,7 +30,19 @@ const Hero = () => {
   const [dotY, setDotY] = useState(0);
   const [railHeight, setRailHeight] = useState(0);
   const {isAuthenticated} = useAuth();
-  const router = useRouter(); 
+  const router = useRouter();
+  
+  // Project generation hook
+  const {
+    isGenerating,
+    generationOpen,
+    generationIdea,
+    generationSteps,
+    generationProgress,
+    generationError,
+    startGeneration,
+    cancelGeneration,
+  } = useProjectGeneration();
 
   const MIN_PROMPT = 30;
   const MAX_PROMPT = 1000;
@@ -102,15 +116,15 @@ const Hero = () => {
   const handleGenerate = useCallback(() => {
     const idea = userText.trim() || displayedText.trim();
     if (!idea) return;
-    if (userText.trim() && userText.trim().length < MIN_PROMPT) {
-      toast({ title: "Too short", description: `Please provide at least ${MIN_PROMPT} characters.`, variant: "destructive" });
+    
+    if (!isAuthenticated) {
+      router.push('/auth/login');
       return;
     }
-    if(!isAuthenticated){
-        router.push('/auth/login');
-    }
     
-  }, [userText, displayedText, toast]);
+    // Use the shared generation hook
+    startGeneration(idea);
+  }, [userText, displayedText, isAuthenticated, router, startGeneration]);
 
   // Track tab visibility
   useEffect(() => {
@@ -309,6 +323,16 @@ const Hero = () => {
 
       {/* Bottom gradient fade */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+
+      {/* Generation Modal */}
+      <ProjectGenerationModal
+        open={generationOpen}
+        idea={generationIdea}
+        steps={generationSteps}
+        progress={generationProgress}
+        error={generationError}
+        onCancel={cancelGeneration}
+      />
     </section>
   );
 };

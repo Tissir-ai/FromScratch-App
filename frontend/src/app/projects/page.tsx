@@ -5,16 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ProjectCreateModal } from "@/components/project/projectWorkspace/ProjectCreateModal"
-import { ProjectGenerationModal, GenerationStep } from "@/components/project/projectWorkspace/ProjectGenerationModal"
+import { ProjectGenerationModal } from "@/components/project/projectWorkspace/ProjectGenerationModal"
 import { useToast } from "@/hooks/use-toast"
+import { useProjectGeneration } from "@/hooks/useProjectGeneration"
 import type { Project } from "@/types/project.type"
 import {
   fetchProjects,
   createProject,
-  generateFromScratchProject,
   deleteProject,
-  pollRunStatus,
-  RunStatus
 } from "@/services/project.service"
 import { RefreshCw } from "lucide-react"
 import { ProjectNavigation } from "@/components/project/projectWorkspace/ProjectNavigation"
@@ -28,14 +26,6 @@ import { useAuth } from "@/context/AuthContext";
 
 type ViewType = "grid" | "table"
 
-const GENERATION_STEPS: GenerationStep[] = [
-  { key: 'init', label: 'Initializing project', status: 'pending' },
-  { key: 'requirements', label: 'Analyzing requirements', status: 'pending' },
-  { key: 'diagrams', label: 'Generating diagrams', status: 'pending' },
-  { key: 'plan', label: 'Creating implementation plan', status: 'pending' },
-  { key: 'export', label: 'Finalizing blueprint', status: 'pending' },
-]
-
 export default function ProjectsPage() {
   const { toast } = useToast()
   const [projects, setProjects] = useState<Project[]>([])
@@ -46,12 +36,16 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false)
   
-  // Generation state
-  const [generationOpen, setGenerationOpen] = useState(false)
-  const [generationIdea, setGenerationIdea] = useState("")
-  const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>(GENERATION_STEPS)
-  const [generationProgress, setGenerationProgress] = useState(0)
-  const [generationError, setGenerationError] = useState<string | null>(null)
+  // Use the shared generation hook
+  const {
+    generationOpen,
+    generationIdea,
+    generationSteps,
+    generationProgress,
+    generationError,
+    startGeneration,
+    cancelGeneration,
+  } = useProjectGeneration()
   
   const { user , plan } = useAuth();
   const router = useRouter()
@@ -122,117 +116,10 @@ export default function ProjectsPage() {
     }
   }
 
-  const updateGenerationStep = (stepKey: string, status: GenerationStep['status']) => {
-    setGenerationSteps(prev => 
-      prev.map(step => 
-        step.key === stepKey ? { ...step, status } : step
-      )
-    )
-  }
-
-  const calculateProgress = (runStatus: RunStatus): number => {
-    const hasRequirements = !!runStatus.content?.requirements
-    const hasDiagrams = !!runStatus.content?.diagrams
-    const hasPlan = !!runStatus.content?.plan
-    const hasExport = !!runStatus.content?.export
-    
-    let progress = 10 // Base for init
-    
-    if (hasRequirements) progress += 25
-    if (hasDiagrams) progress += 25
-    if (hasPlan) progress += 25
-    if (hasExport) progress += 15
-    
-    return Math.min(progress, 100)
-  }
-
-  const updateStepsFromRunStatus = (runStatus: RunStatus) => {
-    // Update steps based on content availability
-    if (runStatus.content?.requirements) {
-      updateGenerationStep('requirements', 'completed')
-    }
-    if (runStatus.content?.diagrams) {
-      updateGenerationStep('diagrams', 'completed')
-    }
-    if (runStatus.content?.plan) {
-      updateGenerationStep('plan', 'completed')
-    }
-    if (runStatus.content?.export) {
-      updateGenerationStep('export', 'completed')
-    }
-    
-    // Set current step based on what's not yet completed
-    if (runStatus.status === 'running') {
-      if (!runStatus.content?.requirements) {
-        updateGenerationStep('requirements', 'in-progress')
-      } else if (!runStatus.content?.diagrams) {
-        updateGenerationStep('diagrams', 'in-progress')
-      } else if (!runStatus.content?.plan) {
-        updateGenerationStep('plan', 'in-progress')
-      } else if (!runStatus.content?.export) {
-        updateGenerationStep('export', 'in-progress')
-      }
-    }
-  }
-
   const handleGenerate = async (idea: string) => {
     if(!checkFeatures()) return;
-    if (!user) {
-      router.push('/auth/signin')
-      return
-    }
-    // Reset generation state
-    setGenerationIdea(idea)
-    setGenerationSteps(GENERATION_STEPS)
-    setGenerationProgress(0)
-    setGenerationError(null)
-    setGenerationOpen(true)
-    
-    try {
-      // Start generation
-      updateGenerationStep('init', 'in-progress')
-      const response = await generateFromScratchProject({ idea })
-      updateGenerationStep('init', 'completed')
-      setGenerationProgress(10)
-      
-      // Poll for status
-      await pollRunStatus(
-        response.run_id,
-        user,
-        (status) => {
-          // Update UI on each poll
-          const progress = calculateProgress(status)
-          setGenerationProgress(progress)
-          updateStepsFromRunStatus(status)
-        }
-      )
-      
-      // Mark all steps complete
-      setGenerationSteps(prev => prev.map(step => ({ ...step, status: 'completed' as const })))
-      setGenerationProgress(100)
-      
-      // Close modal and refresh projects
-      setTimeout(() => {
-        setGenerationOpen(false)
-        toast({ title: "Success", description: "Project generated successfully" })
-        loadProjects().then(() => {
-          // Navigate to the new project
-          router.push(`/projects/${response.project_id}/overview`)
-        })
-      }, 1500)
-      
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to generate project"
-      setGenerationError(message)
-      
-      // Mark current step as error
-      const currentStep = generationSteps.find(s => s.status === 'in-progress')
-      if (currentStep) {
-        updateGenerationStep(currentStep.key, 'error')
-      }
-      
-      toast({ title: "Error", description: message, variant: "destructive" })
-    }
+    // Use the shared generation hook - it handles auth, validation, and redirect
+    await startGeneration(idea)
   }
 
   const handleViewDetails = (project: Project) => {
@@ -380,17 +267,7 @@ export default function ProjectsPage() {
         steps={generationSteps}
         progress={generationProgress}
         error={generationError}
-        onCancel={() => {
-          if (!generationError) {
-            toast({ 
-              title: "Generation in progress", 
-              description: "Please wait for the generation to complete",
-              variant: "default" 
-            })
-          } else {
-            setGenerationOpen(false)
-          }
-        }}
+        onCancel={cancelGeneration}
       />
     </main>
   )

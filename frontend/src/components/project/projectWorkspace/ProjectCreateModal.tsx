@@ -29,7 +29,7 @@ export function ProjectCreateModal({ onCreate, onGenerate }: ProjectCreateModalP
   const [description, setDescription] = useState("")
   const [idea, setIdea] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const MAX_PROMPT = 300
+  const MAX_PROMPT = 1000
 
   const { toast } = useToast()
 
